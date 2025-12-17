@@ -88,7 +88,8 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 
 	// Create user message
 	userMessage := &models.Message{
-		ThreadID:  threadID,
+		UserID:    userID,
+		ThreadID:  &threadID,
 		Sender:    models.SenderTypeUser,
 		Content:   content,
 		Timestamp: time.Now(),
@@ -113,7 +114,8 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 
 	// Create agent message
 	agentMessage := &models.Message{
-		ThreadID:  threadID,
+		UserID:    userID,
+		ThreadID:  &threadID,
 		Sender:    models.SenderTypeAgent,
 		Content:   agentContent,
 		Timestamp: time.Now(),
@@ -166,7 +168,8 @@ func (s *MessageService) CreateSellerMessage(threadID, userID uuid.UUID, content
 
 	// Create seller message
 	sellerMessage := &models.Message{
-		ThreadID:  threadID,
+		UserID:    userID,
+		ThreadID:  &threadID,
 		Sender:    models.SenderTypeSeller,
 		Content:   content,
 		Timestamp: time.Now(),

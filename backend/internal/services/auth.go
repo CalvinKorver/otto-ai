@@ -50,14 +50,23 @@ func (s *AuthService) RegisterUser(email, password string) (*models.User, error)
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Create user
+	// Create user with generated inbox email
 	user := &models.User{
 		Email:        email,
 		PasswordHash: string(hashedPassword),
 	}
 
+	// Create user first to get the ID
 	if err := s.db.Create(user).Error; err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	// Generate inbox email using user ID
+	user.InboxEmail = fmt.Sprintf("%s@carbuyer.app", user.ID.String())
+
+	// Update user with inbox email
+	if err := s.db.Save(user).Error; err != nil {
+		return nil, fmt.Errorf("failed to set inbox email: %w", err)
 	}
 
 	return user, nil
