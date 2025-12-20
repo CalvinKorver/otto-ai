@@ -179,4 +179,8 @@ export const messageAPI = {
   assignInboxMessageToThread: async (messageId: string, threadId: string): Promise<void> => {
     await api.put(`/inbox/messages/${messageId}/assign`, { threadId });
   },
+
+  archiveInboxMessage: async (messageId: string): Promise<void> => {
+    await api.delete(`/inbox/messages/${messageId}`);
+  },
 };

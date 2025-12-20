@@ -128,6 +128,7 @@ func main() {
 			r.Use(middleware.AuthMiddleware(authService))
 			r.Get("/messages", messageHandler.GetInboxMessages)
 			r.Put("/messages/{id}/assign", messageHandler.AssignInboxMessageToThread)
+			r.Delete("/messages/{id}", messageHandler.ArchiveInboxMessage)
 		})
 
 		// Webhook routes (public - no auth)

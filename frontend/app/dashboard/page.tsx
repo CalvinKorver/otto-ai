@@ -78,7 +78,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen style={{ '--sidebar-width': '22rem' } as React.CSSProperties}>
       <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar
           threads={threads}

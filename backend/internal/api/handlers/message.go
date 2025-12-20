@@ -330,3 +330,38 @@ func (h *MessageHandler) AssignInboxMessageToThread(w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "assigned successfully"})
 }
+
+// ArchiveInboxMessage soft deletes an inbox message
+func (h *MessageHandler) ArchiveInboxMessage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
+	if !ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	messageIDStr := chi.URLParam(r, "id")
+	messageID, err := uuid.Parse(messageIDStr)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid message ID"})
+		return
+	}
+
+	if err := h.messageService.ArchiveInboxMessage(messageID, userID); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		if err.Error() == "inbox message not found" {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "archived successfully"})
+}

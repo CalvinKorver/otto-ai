@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { InboxMessage, Thread, messageAPI, Message } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import ArchiveConfirmDialog from './ArchiveConfirmDialog';
 
 interface ChatPaneProps {
   selectedThreadId: string | null;
@@ -13,7 +14,9 @@ interface ChatPaneProps {
 
 export default function ChatPane({ selectedThreadId, selectedInboxMessage, threads = [], onInboxMessageAssigned }: ChatPaneProps) {
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [assigningToThread, setAssigningToThread] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [messageInput, setMessageInput] = useState('');
@@ -57,6 +60,30 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
       alert('Failed to assign message to thread');
     } finally {
       setAssigningToThread(false);
+    }
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!selectedInboxMessage) return;
+
+    setArchiving(true);
+    try {
+      await messageAPI.archiveInboxMessage(selectedInboxMessage.id);
+
+      // Close dialog
+      setShowArchiveDialog(false);
+
+      // Trigger inbox refresh
+      window.dispatchEvent(new Event('refreshInboxMessages'));
+
+      if (onInboxMessageAssigned) {
+        onInboxMessageAssigned();
+      }
+    } catch (error) {
+      console.error('Failed to archive message:', error);
+      alert('Failed to archive message');
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -136,11 +163,16 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
           <div className="flex gap-3">
             <button
               onClick={() => setShowAssignModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+              disabled={archiving}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Assign to Thread
             </button>
-            <button className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer">
+            <button
+              onClick={() => setShowArchiveDialog(true)}
+              disabled={archiving}
+              className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Archive
             </button>
           </div>
@@ -185,6 +217,14 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
             </div>
           </div>
         )}
+
+        {/* Archive Confirmation Dialog */}
+        <ArchiveConfirmDialog
+          open={showArchiveDialog}
+          onOpenChange={setShowArchiveDialog}
+          onConfirm={handleArchiveConfirm}
+          archiving={archiving}
+        />
       </div>
     );
   }

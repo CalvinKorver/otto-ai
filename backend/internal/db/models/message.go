@@ -26,6 +26,7 @@ type Message struct {
 	Subject           string     `json:"subject,omitempty"`
 	Metadata          *string    `gorm:"type:jsonb" json:"metadata,omitempty"`
 	SentViaEmail      bool       `gorm:"default:false" json:"sentViaEmail"`
+	DeletedAt         *time.Time `gorm:"index" json:"deletedAt,omitempty"`
 
 	User   *User   `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Thread *Thread `gorm:"foreignKey:ThreadID" json:"thread,omitempty"`

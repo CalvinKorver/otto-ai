@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Car, Mail, MessageSquare, Plus, Copy, Check } from 'lucide-react';
 import { Thread, InboxMessage, messageAPI, threadAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { SidebarInboxItem } from './SidebarInboxItem';
 import {
   Sidebar,
   SidebarContent,
@@ -167,35 +168,24 @@ export function AppSidebar({
                 </div>
               )}
 
-              <SidebarMenu>
+              <div className="flex flex-col gap-2 px-2">
                 {loadingInbox ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">Loading...</div>
+                  <div className="px-2 py-2 text-sm text-muted-foreground">Loading...</div>
                 ) : inboxMessages.length === 0 ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground italic">
+                  <div className="px-2 py-2 text-sm text-muted-foreground italic">
                     No new messages
                   </div>
                 ) : (
                   inboxMessages.map((message) => (
-                    <SidebarMenuItem key={message.id}>
-                      <SidebarMenuButton
-                        onClick={() => onInboxMessageSelect(message)}
-                        isActive={selectedInboxMessageId === message.id}
-                        className="flex flex-col items-start h-auto py-2"
-                      >
-                        <div className="font-medium truncate w-full">
-                          {message.subject || 'No Subject'}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate w-full">
-                          {message.senderEmail}
-                        </div>
-                        <div className="text-xs text-muted-foreground line-clamp-2 w-full">
-                          {message.content}
-                        </div>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <SidebarInboxItem
+                      key={message.id}
+                      message={message}
+                      isActive={selectedInboxMessageId === message.id}
+                      onSelect={onInboxMessageSelect}
+                    />
                   ))
                 )}
-              </SidebarMenu>
+              </div>
             </SidebarGroupContent>
           </SidebarGroup>
 
