@@ -86,6 +86,22 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 		recentMessages[i], recentMessages[j] = recentMessages[j], recentMessages[i]
 	}
 
+	// Log context information
+	fmt.Printf("\n========== CLAUDE CONTEXT DEBUG ==========\n")
+	fmt.Printf("User Message: %s\n", content)
+	fmt.Printf("User Preferences: %d %s %s\n", prefs.Year, prefs.Make, prefs.Model)
+	fmt.Printf("Seller Name: %s\n", thread.SellerName)
+	fmt.Printf("Message History Count: %d\n", len(recentMessages))
+	if len(recentMessages) > 0 {
+		fmt.Printf("Message History:\n")
+		for i, msg := range recentMessages {
+			fmt.Printf("  [%d] %s: %s\n", i+1, msg.Sender, msg.Content)
+		}
+	} else {
+		fmt.Printf("Message History: (none - this is the first message)\n")
+	}
+	fmt.Printf("==========================================\n\n")
+
 	// Create user message
 	userMessage := &models.Message{
 		UserID:    userID,

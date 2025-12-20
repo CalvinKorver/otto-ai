@@ -76,6 +76,30 @@ When the user provides a message, enhance it to be more effective for negotiatio
 	userPrompt := fmt.Sprintf("The user wants to send this message: \"%s\"\n\nEnhance this message to be more effective for negotiating with %s. Return ONLY the enhanced message, nothing else.", userMessage, sellerName)
 	messages = append(messages, anthropic.NewUserMessage(anthropic.NewTextBlock(userPrompt)))
 
+	// Log the full Claude request
+	fmt.Printf("\n========== CLAUDE API REQUEST ==========\n")
+	fmt.Printf("System Prompt:\n%s\n\n", systemPrompt)
+	fmt.Printf("Message Count: %d\n", len(messages))
+	fmt.Printf("Messages:\n")
+	for i, msg := range messages {
+		role := string(msg.Role)
+		fmt.Printf("  [%d] %s:\n", i+1, role)
+		// Extract text from content blocks
+		for _, block := range msg.Content {
+			// Check the union type fields
+			if block.OfText != nil {
+				fmt.Printf("    Text: %s\n", block.OfText.Text)
+			} else if block.OfImage != nil {
+				fmt.Printf("    (image block)\n")
+			} else if block.OfDocument != nil {
+				fmt.Printf("    (document block)\n")
+			} else {
+				fmt.Printf("    (other block type)\n")
+			}
+		}
+	}
+	fmt.Printf("========================================\n\n")
+
 	// Call Claude API using the current SDK pattern
 	message, err := s.client.Messages.New(context.Background(), anthropic.MessageNewParams{
 		Model:     anthropic.ModelClaudeSonnet4_5_20250929,
@@ -100,5 +124,12 @@ When the user provides a message, enhance it to be more effective for negotiatio
 		return "", fmt.Errorf("unexpected response format from Claude")
 	}
 
-	return strings.TrimSpace(message.Content[0].Text), nil
+	responseText := strings.TrimSpace(message.Content[0].Text)
+
+	// Log the response
+	fmt.Printf("\n========== CLAUDE API RESPONSE ==========\n")
+	fmt.Printf("Response: %s\n", responseText)
+	fmt.Printf("=========================================\n\n")
+
+	return responseText, nil
 }

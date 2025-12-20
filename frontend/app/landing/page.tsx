@@ -59,7 +59,7 @@ export default function LandingPage() {
           <FeatureCard
             icon={<Bell className="size-10 text-primary" />}
             title="Track & Compare"
-            description="Manage all dealer conversations in one place. Compare offers side-by-side - our agent will keep track of all offers."
+            description="Manage all dealer conversations in one place. Compare offers side-by-side - our he model will keep track of all offers."
           />
         </div>
       </section>

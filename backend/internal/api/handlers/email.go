@@ -51,12 +51,37 @@ type MailgunWebhookPayload struct {
 
 // InboundEmail handles incoming emails from Mailgun webhook
 func (h *EmailHandler) InboundEmail(w http.ResponseWriter, r *http.Request) {
-	// Parse form data from Mailgun route (can be multipart or urlencoded)
-	if err := r.ParseForm(); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid form data"})
-		return
+	// Debug: log request details
+	log.Printf("Content-Type: %s, Method: %s, Content-Length: %d",
+		r.Header.Get("Content-Type"), r.Method, r.ContentLength)
+
+	// Try parsing as multipart form first (Mailgun uses this for attachments)
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "" && len(contentType) > 19 && contentType[:19] == "multipart/form-data" {
+		if err := r.ParseMultipartForm(32 << 20); err != nil { // 32MB max
+			log.Printf("ParseMultipartForm error: %v", err)
+			// Don't fail completely - this might be an incomplete webhook notification
+			// Return 200 to prevent Mailgun retries
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"status": "skipped - malformed multipart data"})
+			return
+		}
+	} else {
+		// Parse as regular form data
+		if err := r.ParseForm(); err != nil {
+			log.Printf("ParseForm error: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid form data"})
+			return
+		}
+	}
+
+	// Debug: log ALL form fields to see what Mailgun is sending
+	log.Printf("All form fields received: %v", r.Form)
+	if r.MultipartForm != nil {
+		log.Printf("Multipart form values: %v", r.MultipartForm.Value)
 	}
 
 	// Extract form fields

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { InboxMessage, Thread, messageAPI, Message } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 
 interface ChatPaneProps {
   selectedThreadId: string | null;
@@ -15,6 +16,9 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
   const [assigningToThread, setAssigningToThread] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messageInput, setMessageInput] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedThreadId) {
@@ -56,10 +60,54 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!selectedThreadId || !messageInput.trim() || sendingMessage) {
+      return;
+    }
+
+    const content = messageInput.trim();
+    setSendingMessage(true);
+
+    try {
+      const response = await messageAPI.createMessage(selectedThreadId, {
+        content,
+        sender: 'user'
+      });
+
+      // Add both user and agent messages to local state
+      if ('userMessage' in response) {
+        setMessages(prev => [
+          ...prev,
+          response.userMessage,
+          ...(response.agentMessage ? [response.agentMessage] : [])
+        ]);
+      }
+
+      // Clear input
+      setMessageInput('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   // Show inbox message if selected
   if (selectedInboxMessage) {
     return (
-      <div className="flex-1 flex flex-col bg-background">
+      <div className="flex-1 flex flex-col bg-background h-full">
         {/* Email Header */}
         <div className="border-b border-border px-6 py-4 bg-card">
           <h2 className="text-xl font-semibold text-card-foreground mb-2">
@@ -75,9 +123,9 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
         </div>
 
         {/* Email Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/50">
+        <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/50" style={{ overflowY: 'auto' }}>
           <div className="bg-card rounded-lg border border-border p-6">
-            <div className="whitespace-pre-wrap text-card-foreground">
+            <div className="whitespace-pre-wrap text-card-foreground break-words">
               {selectedInboxMessage.content}
             </div>
           </div>
@@ -176,7 +224,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
   const selectedThread = threads.find(t => t.id === selectedThreadId);
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
+    <div className="flex-1 flex flex-col bg-background h-full">
       {/* Thread Header */}
       <div className="border-b border-border px-6 py-4 bg-card">
         <div className="flex items-center justify-between">
@@ -251,6 +299,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
@@ -260,17 +309,26 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
         <div className="flex items-end gap-3">
           <div className="flex-1">
             <textarea
-              placeholder="Type message... AI will assist"
-              rows={1}
-              className="w-full px-4 py-3 bg-background border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type message... AI will assist (Ctrl+Enter to send)"
+              rows={3}
+              disabled={sendingMessage}
+              className="w-full px-4 py-3 bg-background border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer">
-            <span>SEND</span>
+          <Button
+            onClick={handleSendMessage}
+            disabled={sendingMessage || !messageInput.trim()}
+            size="lg"
+            className="px-6"
+          >
+            {sendingMessage ? 'Sending...' : 'Send'}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </button>
+          </Button>
         </div>
       </div>
     </div>
