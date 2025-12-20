@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { InboxMessage, Thread, messageAPI, Message } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import ArchiveConfirmDialog from './ArchiveConfirmDialog';
+import TrackOfferButton from './TrackOfferButton';
 
 interface ChatPaneProps {
   selectedThreadId: string | null;
@@ -120,7 +122,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSendMessage();
@@ -334,6 +336,15 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
                       >
                         {new Date(message.timestamp).toLocaleString()}
                       </div>
+                      {isSeller && selectedThreadId && (
+                        <div className="mt-2">
+                          <TrackOfferButton
+                            threadId={selectedThreadId}
+                            messageId={message.id}
+                            messageContent={message.content}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -346,28 +357,20 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
 
       {/* Message Input */}
       <div className="border-t border-border px-6 py-4 bg-card">
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <textarea
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type message... AI will assist (Ctrl+Enter to send)"
-              rows={3}
-              disabled={sendingMessage}
-              className="w-full px-4 py-3 bg-background border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-          </div>
+        <div className="flex w-full items-center gap-2">
+          <Input
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message... (Try asking about the seller's offer)"
+            disabled={sendingMessage}
+          />
           <Button
             onClick={handleSendMessage}
             disabled={sendingMessage || !messageInput.trim()}
-            size="lg"
-            className="px-6"
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             {sendingMessage ? 'Sending...' : 'Send'}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
           </Button>
         </div>
       </div>

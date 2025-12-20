@@ -5,8 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import ChatPane from '@/components/dashboard/ChatPane';
+import TopNavBar from '@/components/dashboard/TopNavBar';
+import OffersPane from '@/components/dashboard/OffersPane';
 import { Thread, threadAPI, InboxMessage } from '@/lib/api';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+
+type ViewMode = 'chat' | 'inbox' | 'offers';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -15,6 +19,7 @@ export default function DashboardPage() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [selectedInboxMessage, setSelectedInboxMessage] = useState<InboxMessage | null>(null);
   const [loadingThreads, setLoadingThreads] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('chat');
 
   useEffect(() => {
     if (!loading) {
@@ -58,11 +63,25 @@ export default function DashboardPage() {
   const handleThreadSelect = (threadId: string) => {
     setSelectedThreadId(threadId);
     setSelectedInboxMessage(null);
+    setViewMode('chat');
   };
 
   const handleInboxMessageSelect = (message: InboxMessage) => {
     setSelectedInboxMessage(message);
     setSelectedThreadId(null);
+    setViewMode('inbox');
+  };
+
+  const handleViewOffers = () => {
+    setViewMode('offers');
+    setSelectedThreadId(null);
+    setSelectedInboxMessage(null);
+  };
+
+  const handleNavigateToThread = (threadId: string) => {
+    setSelectedThreadId(threadId);
+    setSelectedInboxMessage(null);
+    setViewMode('chat');
   };
 
   if (loading || loadingThreads) {
@@ -79,23 +98,30 @@ export default function DashboardPage() {
 
   return (
     <SidebarProvider defaultOpen style={{ '--sidebar-width': '22rem' } as React.CSSProperties}>
-      <div className="flex h-screen w-full overflow-hidden">
-        <AppSidebar
-          threads={threads}
-          selectedThreadId={selectedThreadId}
-          selectedInboxMessageId={selectedInboxMessage?.id || null}
-          onThreadSelect={handleThreadSelect}
-          onThreadCreated={handleThreadCreated}
-          onInboxMessageSelect={handleInboxMessageSelect}
-        />
-        <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-          <ChatPane
-            selectedThreadId={selectedThreadId}
-            selectedInboxMessage={selectedInboxMessage}
+      <div className="flex flex-col h-screen w-full overflow-hidden">
+        <TopNavBar onViewOffers={handleViewOffers} />
+        <div className="flex flex-1 overflow-hidden">
+          <AppSidebar
             threads={threads}
-            onInboxMessageAssigned={handleInboxMessageAssigned}
+            selectedThreadId={selectedThreadId}
+            selectedInboxMessageId={selectedInboxMessage?.id || null}
+            onThreadSelect={handleThreadSelect}
+            onThreadCreated={handleThreadCreated}
+            onInboxMessageSelect={handleInboxMessageSelect}
           />
-        </SidebarInset>
+          <SidebarInset className="flex-1 flex flex-col overflow-hidden">
+            {viewMode === 'offers' ? (
+              <OffersPane onNavigateToThread={handleNavigateToThread} />
+            ) : (
+              <ChatPane
+                selectedThreadId={selectedThreadId}
+                selectedInboxMessage={selectedInboxMessage}
+                threads={threads}
+                onInboxMessageAssigned={handleInboxMessageAssigned}
+              />
+            )}
+          </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );

@@ -62,6 +62,16 @@ export interface InboxMessage {
   externalMessageId?: string;
 }
 
+export interface TrackedOffer {
+  id: string;
+  threadId: string;
+  messageId?: string;
+  offerText: string;
+  trackedAt: string;
+  sellerName?: string;
+  threadType?: string;
+}
+
 export interface MessageResponse {
   messages: Message[];
   total: number;
@@ -182,5 +192,21 @@ export const messageAPI = {
 
   archiveInboxMessage: async (messageId: string): Promise<void> => {
     await api.delete(`/inbox/messages/${messageId}`);
+  },
+};
+
+// Offer API
+export const offerAPI = {
+  createOffer: async (threadId: string, offerText: string, messageId?: string): Promise<TrackedOffer> => {
+    const response = await api.post<TrackedOffer>(`/threads/${threadId}/offers`, {
+      offerText,
+      messageId: messageId || null,
+    });
+    return response.data;
+  },
+
+  getAllOffers: async (): Promise<TrackedOffer[]> => {
+    const response = await api.get<{ offers: TrackedOffer[] }>('/offers');
+    return response.data.offers;
   },
 };

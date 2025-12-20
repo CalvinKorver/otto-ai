@@ -86,6 +86,15 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 		recentMessages[i], recentMessages[j] = recentMessages[j], recentMessages[i]
 	}
 
+	// Get tracked offers from all user's threads for competitive context
+	var trackedOffers []models.TrackedOffer
+	s.db.Joins("JOIN threads ON threads.id = tracked_offers.thread_id").
+		Where("threads.user_id = ?", userID).
+		Order("tracked_offers.tracked_at DESC").
+		Limit(20).
+		Preload("Thread").
+		Find(&trackedOffers)
+
 	// Log context information
 	fmt.Printf("\n========== CLAUDE CONTEXT DEBUG ==========\n")
 	fmt.Printf("User Message: %s\n", content)
@@ -99,6 +108,17 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 		}
 	} else {
 		fmt.Printf("Message History: (none - this is the first message)\n")
+	}
+	fmt.Printf("Tracked Offers Count: %d\n", len(trackedOffers))
+	if len(trackedOffers) > 0 {
+		fmt.Printf("Tracked Offers:\n")
+		for i, offer := range trackedOffers {
+			sellerName := "Unknown"
+			if offer.Thread != nil {
+				sellerName = offer.Thread.SellerName
+			}
+			fmt.Printf("  [%d] %s: %s\n", i+1, sellerName, offer.OfferText)
+		}
 	}
 	fmt.Printf("==========================================\n\n")
 
@@ -119,6 +139,7 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 		prefs.Model,
 		thread.SellerName,
 		recentMessages,
+		trackedOffers,
 	)
 	if err != nil {
 		// Still save user message even if agent fails

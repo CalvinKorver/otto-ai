@@ -60,6 +60,7 @@ func main() {
 	threadHandler := handlers.NewThreadHandler(threadService)
 	messageHandler := handlers.NewMessageHandler(messageService)
 	emailHandler := handlers.NewEmailHandler(emailService, cfg.MailgunWebhookSigningKey, database.DB)
+	offerHandler := handlers.NewOfferHandler(database)
 
 	// Initialize router
 	r := chi.NewRouter()
@@ -121,6 +122,15 @@ func main() {
 			// Message routes nested under threads
 			r.Get("/{id}/messages", messageHandler.GetMessages)
 			r.Post("/{id}/messages", messageHandler.CreateMessage)
+
+			// Offer routes nested under threads
+			r.Post("/{id}/offers", offerHandler.CreateOffer)
+		})
+
+		// Offer routes (all protected)
+		r.Route("/offers", func(r chi.Router) {
+			r.Use(middleware.AuthMiddleware(authService))
+			r.Get("/", offerHandler.GetAllOffers)
 		})
 
 		// Inbox message routes (all protected)

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Car, Mail, MessageSquare, Plus, Copy, Check } from 'lucide-react';
+import { Mail, MessageSquare, Plus, Copy, Check } from 'lucide-react';
 import { Thread, InboxMessage, messageAPI, threadAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { SidebarInboxItem } from './SidebarInboxItem';
@@ -11,12 +11,10 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
@@ -134,17 +132,19 @@ export function AppSidebar({
   return (
     <>
       <Sidebar>
-        <SidebarHeader className="border-b px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Car className="h-6 w-6" />
-              <h1 className="text-lg font-semibold">Agent Auto</h1>
-            </div>
-            <SidebarTrigger />
-          </div>
-        </SidebarHeader>
-
         <SidebarContent>
+          {/* User Preferences Section */}
+          {user?.preferences && (
+            <div className="px-4 py-3 border-b border-border bg-muted/50">
+              <div className="text-xs font-medium text-muted-foreground mb-2">
+                Looking For
+              </div>
+              <div className="text-sm font-semibold text-foreground">
+                {user.preferences.year} {user.preferences.make} {user.preferences.model}
+              </div>
+            </div>
+          )}
+
           {/* Inbox Section */}
           <SidebarGroup>
             <SidebarGroupLabel className="flex items-center justify-between">

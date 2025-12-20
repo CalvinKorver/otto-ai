@@ -88,7 +88,7 @@
 
 ---
 
-### Phase 3: Enhancements
+### Phase 3: Optional Enhancements
 
 #### Enhancement 1: Cross-Thread Offer Sharing (Medium Priority)
 
@@ -110,6 +110,7 @@
 **1. Database Migration**
 - Create `offers` table with foreign key to `threads`
 - Add indexes on `thread_id` for query performance
+- Do NOT worry about existing data. We should wipe the database before test. I don't want existing data migration scripts
 
 **2. Offer Model** ([backend/internal/db/models/offer.go](backend/internal/db/models/offer.go))
 - Define Offer struct with thread relationship
@@ -138,40 +139,20 @@
 **Frontend Changes Required:**
 
 **1. API Client** ([frontend/lib/api.ts](frontend/lib/api.ts))
-- Add `offerAPI.createOffer(threadId, price)` function
-- TypeScript interface for Offer type with price field
+- Add `offerAPI.createOffer(threadId, offerText, amount?)` function
+- TypeScript interface for Offer type
 
-**2. Track Offer Dialog Component** (new: [frontend/components/dashboard/TrackOfferDialog.tsx](frontend/components/dashboard/TrackOfferDialog.tsx))
-- Use shadcn Dialog component
-- Single input field labeled "Price:"
-- Submit button to create offer
-- Cancel button to close dialog
-- Loading state while submitting
-- Error handling and success feedback
-
-**3. ChatPane UI Updates** ([frontend/components/dashboard/ChatPane.tsx](frontend/components/dashboard/ChatPane.tsx))
-- Add "Track" button (shadcn Button component) below each seller message
-- Button placement: Bottom of message bubble, subtle styling
-- On click: Open TrackOfferDialog
-- Pass thread ID to dialog
-- On successful track: Show success toast/alert
-- Refresh offers list if on offers view
-
-**UI Flow:**
-1. User sees seller message with "Track" button at bottom
-2. Clicks "Track" → Opens dialog
-3. Dialog shows: "Track Offer" title, "Price:" input field
-4. User enters price (e.g., "25000" or "$25,000")
-5. Clicks "Submit" → Creates offer linked to current thread
-6. Success message shown, dialog closes
-7. Offer now appears in Offers view accessible via top nav
+**2. ChatPane UI** ([frontend/components/dashboard/ChatPane.tsx](frontend/components/dashboard/ChatPane.tsx))
+- Add "Track Offer" button on seller messages
+- On click, show simple prompt/dialog for offer details
+- Call API to create offer
+- Show success feedback
 
 **Testing:**
-- Create offers in Thread A using Track button
+- Create offers in Thread A
 - Send message in Thread B
 - Verify Claude references Thread A's offers in response
 - Test with multiple offers across multiple threads
-- Verify offers appear in Offers view (Phase 3.5)
 
 #### Enhancement 1.5: Top Navigation Bar with Offers View (Medium Priority)
 

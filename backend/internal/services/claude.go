@@ -29,7 +29,22 @@ func (s *ClaudeService) GenerateNegotiationResponse(
 	model string,
 	sellerName string,
 	messageHistory []models.Message,
+	trackedOffers []models.TrackedOffer,
 ) (string, error) {
+	// Build competitive context from tracked offers
+	competitiveContext := ""
+	if len(trackedOffers) > 0 {
+		competitiveContext = "\n\nCompetitive Context - Offers from Other Sellers:\n"
+		for _, offer := range trackedOffers {
+			sellerInfo := "Unknown Seller"
+			if offer.Thread != nil {
+				sellerInfo = offer.Thread.SellerName
+			}
+			competitiveContext += fmt.Sprintf("- %s: %s\n", sellerInfo, offer.OfferText)
+		}
+		competitiveContext += "\nUse these offers as leverage in your negotiation. Reference competing offers WITHOUT naming specific sellers (e.g., \"I have another dealer offering...\"). This creates competitive pressure."
+	}
+
 	// Build system prompt
 	systemPrompt := fmt.Sprintf(`You are an expert car negotiation assistant helping a buyer communicate with car sellers.
 Your goal is to secure the best possible deal while maintaining professional and respectful communication.
@@ -39,7 +54,7 @@ User's Requirements:
 - Make: %s
 - Model: %s
 
-Current Seller: %s
+Current Seller: %s%s
 
 Guidelines:
 - Always negotiate within the user's specified requirements
@@ -50,8 +65,9 @@ Guidelines:
 - Never deviate from the specified year, make, and model
 - Be professional and concise
 - Help the user craft effective negotiation messages
+- When you have competing offers, use them as leverage without naming specific sellers
 
-When the user provides a message, enhance it to be more effective for negotiation while keeping their intent.`, year, make, model, sellerName)
+When the user provides a message, enhance it to be more effective for negotiation while keeping their intent.`, year, make, model, sellerName, competitiveContext)
 
 	// Build conversation history
 	messages := []anthropic.MessageParam{}
