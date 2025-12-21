@@ -1,0 +1,33 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+/bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+*.test
+*.out
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+
+# Go workspace
+go.work

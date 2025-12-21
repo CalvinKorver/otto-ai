@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -28,9 +29,9 @@ func Load() (*Config, error) {
 	jwtSecret := getEnv("JWT_SECRET", "")
 	jwtExpirationHours := getEnvAsInt("JWT_EXPIRATION_HOURS", 24)
 	anthropicAPIKey := getEnv("ANTHROPIC_API_KEY", "")
-	allowedOrigins := []string{
-		getEnv("ALLOWED_ORIGINS", "http://localhost:3000"),
-	}
+	// Parse ALLOWED_ORIGINS - supports comma-separated list
+	originsStr := getEnv("ALLOWED_ORIGINS", "http://localhost:3000")
+	allowedOrigins := strings.Split(originsStr, ",")
 	rateLimitAuth := getEnvAsInt("RATE_LIMIT_AUTH", 5)
 	rateLimitAPI := getEnvAsInt("RATE_LIMIT_API", 100)
 	mailgunAPIKey := getEnv("MAILGUN_API_KEY", "")

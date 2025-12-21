@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: car-buyer-backend
+    env: go
+    region: oregon
+    plan: free
+    buildCommand: cd backend && go build -o bin/server cmd/server/main.go
+    startCommand: cd backend && ./bin/server
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_HOURS
+        value: 24
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: RATE_LIMIT_AUTH
+        value: 5
+      - key: RATE_LIMIT_API
+        value: 100
+    healthCheckPath: /health

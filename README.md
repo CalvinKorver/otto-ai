@@ -2,14 +2,32 @@
 
 An AI-powered car buying assistant that helps users negotiate and communicate with multiple car sellers simultaneously through dedicated agent-based chat threads.
 
+## Quick Links
+
+- **[Production Deployment Guide](QUICKSTART.md)** - Deploy to production in 30 minutes
+- **[Deployment Documentation](DEPLOYMENT.md)** - Detailed deployment information
+- **[Technical Specification](SPEC.md)** - Complete API and architecture docs
+- **[Database Migrations](backend/MIGRATIONS.md)** - Migration strategy and best practices
+
 ## Project Structure
 
 ```
 car-buyer/
-├── frontend/          # Next.js frontend application
-├── backend/           # Go backend API server
-├── ui-mockup/         # UI design mockups
-└── SPEC.md            # Complete technical specification
+├── frontend/              # Next.js frontend application
+├── backend/               # Go backend API server
+│   ├── cmd/server/       # Main application entry point
+│   ├── internal/         # Internal packages
+│   │   ├── api/         # HTTP handlers and middleware
+│   │   ├── config/      # Configuration management
+│   │   ├── db/          # Database connection
+│   │   ├── models/      # Database models
+│   │   └── services/    # Business logic
+│   ├── Dockerfile       # Container configuration
+│   └── MIGRATIONS.md    # Migration documentation
+├── .github/workflows/    # CI/CD pipelines
+├── DEPLOYMENT.md         # Deployment guide
+├── QUICKSTART.md         # Quick deployment guide
+└── SPEC.md              # Technical specification
 ```
 
 ## Technology Stack
@@ -220,6 +238,34 @@ NEXT_PUBLIC_ENVIRONMENT=development
 ## Contributing
 
 See [SPEC.md](SPEC.md) for detailed technical specifications and development guidelines.
+
+## Production Deployment
+
+Ready to deploy? See [QUICKSTART.md](QUICKSTART.md) for step-by-step deployment instructions.
+
+### Recommended Stack
+- **Frontend**: Vercel (Next.js native)
+- **Backend**: Railway or Render (containerized Go)
+- **Database**: Neon (serverless PostgreSQL with branching)
+- **Cost**: ~$5-10/month to start
+
+### Quick Deploy Checklist
+- [ ] Create Neon PostgreSQL databases (prod, preview, local)
+- [ ] Deploy backend to Railway/Render
+- [ ] Deploy frontend to Vercel
+- [ ] Configure environment variables
+- [ ] Set up preview environments
+- [ ] Test end-to-end flow
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed information.
+
+## Documentation
+
+- [QUICKSTART.md](QUICKSTART.md) - Production deployment in 30 minutes
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Detailed deployment documentation
+- [SPEC.md](SPEC.md) - Complete technical specification and API docs
+- [backend/MIGRATIONS.md](backend/MIGRATIONS.md) - Database migration strategy
+- [.env.template](.env.template) - Environment variable template
 
 ## License
 

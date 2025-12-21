@@ -83,8 +83,23 @@ func main() {
 
 	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		// Check database connection
+		sqlDB, err := database.DB.DB()
+		if err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Database connection error"))
+			return
+		}
+
+		if err := sqlDB.Ping(); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Database ping failed"))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		w.Write([]byte(`{"status":"healthy","database":"connected"}`))
 	})
 
 	// API routes
