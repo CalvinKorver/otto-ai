@@ -22,11 +22,15 @@ car-buyer/
 │   │   ├── db/          # Database connection
 │   │   ├── models/      # Database models
 │   │   └── services/    # Business logic
-│   ├── Dockerfile       # Container configuration
 │   └── MIGRATIONS.md    # Migration documentation
 ├── .github/workflows/    # CI/CD pipelines
-├── DEPLOYMENT.md         # Deployment guide
-├── QUICKSTART.md         # Quick deployment guide
+├── Dockerfile           # Backend container configuration
+├── .dockerignore        # Docker build exclusions
+├── railway.json         # Railway deployment config
+├── render.yaml          # Render deployment config
+├── vercel.json          # Vercel deployment config
+├── DEPLOYMENT.md        # Detailed deployment guide
+├── QUICKSTART.md        # Quick deployment guide (30 min)
 └── SPEC.md              # Technical specification
 ```
 

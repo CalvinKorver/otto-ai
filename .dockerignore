@@ -1,0 +1,52 @@
+# Frontend (not needed for backend build)
+frontend/
+ui-mockup/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.local
+
+# Build outputs
+bin/
+backend/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+*.test
+*.out
+
+# Git
+.git
+.gitignore
+.github/
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+SPEC.md
+DEPLOYMENT.md
+QUICKSTART.md
+
+# Go workspace
+go.work
+
+# Vercel
+.vercel
+vercel.json
+
+# Railway/Render
+railway.json
+render.yaml

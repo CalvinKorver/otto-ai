@@ -44,46 +44,71 @@ Store these securely - you'll need them next:
 
 ### Option A: Railway (Recommended)
 
-1. **Install CLI**:
+#### Using Railway Dashboard (Easier for First Deploy)
+
+1. **Create Project via Dashboard**:
+   - Go to [railway.app](https://railway.app) and sign in
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Connect your GitHub repository
+   - Select the `car-buyer` repository
+   - Railway will detect the Dockerfile automatically
+
+2. **Configure Service**:
+   - Railway will auto-detect the `Dockerfile` in the root
+   - **Name**: car-buyer-backend
+   - **Root Directory**: Leave empty (uses project root)
+   - Railway will automatically start building with Docker
+   - Wait for initial build to complete (may take 2-3 minutes)
+
+3. **Add Environment Variables**:
+   - Go to your service → "Variables" tab
+   - Click "New Variable" and add each:
+     - `PORT` = `8080`
+     - `ENVIRONMENT` = `production`
+     - `DATABASE_URL` = `<your-neon-production-url>`
+     - `JWT_SECRET` = Click "Generate" or use: `openssl rand -base64 32`
+     - `JWT_EXPIRATION_HOURS` = `24`
+     - `ANTHROPIC_API_KEY` = `<your-anthropic-key>`
+     - `ALLOWED_ORIGINS` = `http://localhost:3000` (will update after Vercel)
+     - `RATE_LIMIT_AUTH` = `5`
+     - `RATE_LIMIT_API` = `100`
+
+4. **Generate Domain**:
+   - Go to "Settings" tab → "Networking"
+   - Click "Generate Domain"
+   - Copy the domain (e.g., `car-buyer-backend-production.up.railway.app`)
+
+5. **Verify Deployment**:
+```bash
+curl https://your-domain.railway.app/health
+# Should return: {"status":"healthy","database":"connected"}
+```
+
+#### Alternative: Using Railway CLI
+
+1. **Install and Login**:
 ```bash
 npm i -g @railway/cli
 railway login
 ```
 
-2. **Create Production Project**:
+2. **Link to Existing Project** (after creating via dashboard):
 ```bash
-cd backend
-railway init
-# Name: car-buyer-backend
+cd /Users/calvinkorver/car-buyer
 railway link
+# Select your project from the list
 ```
 
-3. **Set Environment Variables**:
+3. **Set Variables via CLI** (optional):
 ```bash
-# Generate a secure JWT secret
-JWT_SECRET=$(openssl rand -base64 32)
-
-# Set all required variables
 railway variables set PORT=8080
 railway variables set ENVIRONMENT=production
-railway variables set DATABASE_URL="<your-neon-production-url>"
-railway variables set JWT_SECRET="$JWT_SECRET"
-railway variables set JWT_EXPIRATION_HOURS=24
-railway variables set ANTHROPIC_API_KEY="<your-anthropic-key>"
-railway variables set ALLOWED_ORIGINS="<will-update-after-vercel>"
-railway variables set RATE_LIMIT_AUTH=5
-railway variables set RATE_LIMIT_API=100
+# ... etc
 ```
 
-4. **Deploy**:
+4. **Deploy via CLI** (optional):
 ```bash
 railway up
-```
-
-5. **Get Backend URL**:
-```bash
-railway status
-# Copy the deployment URL (e.g., https://car-buyer-backend.railway.app)
 ```
 
 ### Option B: Render
