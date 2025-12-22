@@ -179,9 +179,6 @@ export default function ThreadPane({
                   }`}
                 >
                   <div className="font-medium text-sm">{thread.sellerName}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">
-                    {thread.sellerType}
-                  </div>
                 </button>
               ))}
             </div>

@@ -210,9 +210,6 @@ export function AppSidebar({
                         className="flex flex-col items-start h-auto py-2"
                       >
                         <div className="font-medium">{thread.sellerName}</div>
-                        <div className="text-xs text-muted-foreground capitalize">
-                          {thread.sellerType}
-                        </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))
