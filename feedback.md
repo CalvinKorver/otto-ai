@@ -4,3 +4,5 @@
 - assigning a message to a thread will start analysis prior to user actually prompting for it
 - 
 
+
+tracked offer -> tracked once tracked

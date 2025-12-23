@@ -32,11 +32,14 @@ type MessageRequest struct {
 
 // MessageResponse represents a message in API responses
 type MessageResponse struct {
-	ID        string `json:"id"`
-	ThreadID  string `json:"threadId"`
-	Sender    string `json:"sender"`
-	Content   string `json:"content"`
-	Timestamp string `json:"timestamp"`
+	ID                string `json:"id"`
+	ThreadID          string `json:"threadId"`
+	Sender            string `json:"sender"`
+	Content           string `json:"content"`
+	Timestamp         string `json:"timestamp"`
+	ExternalMessageID string `json:"externalMessageId,omitempty"`
+	SenderEmail       string `json:"senderEmail,omitempty"`
+	Subject           string `json:"subject,omitempty"`
 }
 
 // GetMessages retrieves messages for a thread
@@ -98,11 +101,14 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	response.Messages = make([]MessageResponse, len(messages))
 	for i, msg := range messages {
 		response.Messages[i] = MessageResponse{
-			ID:        msg.ID.String(),
-			ThreadID:  msg.ThreadID.String(),
-			Sender:    string(msg.Sender),
-			Content:   msg.Content,
-			Timestamp: msg.Timestamp.Format("2006-01-02T15:04:05Z"),
+			ID:                msg.ID.String(),
+			ThreadID:          msg.ThreadID.String(),
+			Sender:            string(msg.Sender),
+			Content:           msg.Content,
+			Timestamp:         msg.Timestamp.Format("2006-01-02T15:04:05Z"),
+			ExternalMessageID: msg.ExternalMessageID,
+			SenderEmail:       msg.SenderEmail,
+			Subject:           msg.Subject,
 		}
 	}
 
@@ -158,11 +164,14 @@ func (h *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 			SellerMessage MessageResponse `json:"sellerMessage"`
 		}{
 			SellerMessage: MessageResponse{
-				ID:        sellerMsg.ID.String(),
-				ThreadID:  sellerMsg.ThreadID.String(),
-				Sender:    string(sellerMsg.Sender),
-				Content:   sellerMsg.Content,
-				Timestamp: sellerMsg.Timestamp.Format("2006-01-02T15:04:05Z"),
+				ID:                sellerMsg.ID.String(),
+				ThreadID:          sellerMsg.ThreadID.String(),
+				Sender:            string(sellerMsg.Sender),
+				Content:           sellerMsg.Content,
+				Timestamp:         sellerMsg.Timestamp.Format("2006-01-02T15:04:05Z"),
+				ExternalMessageID: sellerMsg.ExternalMessageID,
+				SenderEmail:       sellerMsg.SenderEmail,
+				Subject:           sellerMsg.Subject,
 			},
 		})
 		return
@@ -182,21 +191,27 @@ func (h *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Request) {
 		AgentMessage *MessageResponse `json:"agentMessage,omitempty"`
 	}{
 		UserMessage: MessageResponse{
-			ID:        userMsg.ID.String(),
-			ThreadID:  userMsg.ThreadID.String(),
-			Sender:    string(userMsg.Sender),
-			Content:   userMsg.Content,
-			Timestamp: userMsg.Timestamp.Format("2006-01-02T15:04:05Z"),
+			ID:                userMsg.ID.String(),
+			ThreadID:          userMsg.ThreadID.String(),
+			Sender:            string(userMsg.Sender),
+			Content:           userMsg.Content,
+			Timestamp:         userMsg.Timestamp.Format("2006-01-02T15:04:05Z"),
+			ExternalMessageID: userMsg.ExternalMessageID,
+			SenderEmail:       userMsg.SenderEmail,
+			Subject:           userMsg.Subject,
 		},
 	}
 
 	if agentMsg != nil {
 		response.AgentMessage = &MessageResponse{
-			ID:        agentMsg.ID.String(),
-			ThreadID:  agentMsg.ThreadID.String(),
-			Sender:    string(agentMsg.Sender),
-			Content:   agentMsg.Content,
-			Timestamp: agentMsg.Timestamp.Format("2006-01-02T15:04:05Z"),
+			ID:                agentMsg.ID.String(),
+			ThreadID:          agentMsg.ThreadID.String(),
+			Sender:            string(agentMsg.Sender),
+			Content:           agentMsg.Content,
+			Timestamp:         agentMsg.Timestamp.Format("2006-01-02T15:04:05Z"),
+			ExternalMessageID: agentMsg.ExternalMessageID,
+			SenderEmail:       agentMsg.SenderEmail,
+			Subject:           agentMsg.Subject,
 		}
 	}
 

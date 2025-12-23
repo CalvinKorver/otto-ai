@@ -15,6 +15,13 @@ func SendReply(service *gmail.Service, to, subject, htmlBody, externalMessageID 
 	// Format: RFC 2822
 	message := buildReplyMessage(to, subject, htmlBody, externalMessageID)
 
+	fmt.Printf("=== SENDING EMAIL VIA GMAIL ===\n")
+	fmt.Printf("To: %s\n", to)
+	fmt.Printf("Subject: %s\n", subject)
+	fmt.Printf("In-Reply-To: %s\n", externalMessageID)
+	fmt.Printf("Full message:\n%s\n", message)
+	fmt.Printf("================================\n")
+
 	// Encode message to base64url (required by Gmail API)
 	encoded := base64.URLEncoding.EncodeToString([]byte(message))
 	// Gmail API requires base64url (no padding)
@@ -28,6 +35,7 @@ func SendReply(service *gmail.Service, to, subject, htmlBody, externalMessageID 
 	}
 
 	// Send the message
+	// Gmail will automatically thread based on In-Reply-To and References headers
 	_, err := service.Users.Messages.Send("me", gmailMessage).Do()
 	if err != nil {
 		return fmt.Errorf("failed to send email: %w", err)

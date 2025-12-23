@@ -68,7 +68,7 @@ func main() {
 	emailService := services.NewEmailService(database.DB, cfg.MailgunAPIKey, cfg.MailgunDomain, gmailService)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(authService, gmailService)
 	preferencesHandler := handlers.NewPreferencesHandler(preferencesService)
 	threadHandler := handlers.NewThreadHandler(threadService)
 	messageHandler := handlers.NewMessageHandler(messageService, emailService)

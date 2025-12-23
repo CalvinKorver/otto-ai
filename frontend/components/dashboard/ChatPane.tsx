@@ -15,8 +15,11 @@ import {
 import { IconTrash } from '@tabler/icons-react';
 import ArchiveConfirmDialog from './ArchiveConfirmDialog';
 import TrackOfferButton from './TrackOfferButton';
+import SendEmailButton from './SendEmailButton';
 import TypingIndicator from './TypingIndicator';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 type MessageStatus = 'sending' | 'sent' | 'error';
 
@@ -34,6 +37,7 @@ interface ChatPaneProps {
 }
 
 export default function ChatPane({ selectedThreadId, selectedInboxMessage, threads = [], onInboxMessageAssigned }: ChatPaneProps) {
+  const { user } = useAuth();
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [assigningToThread, setAssigningToThread] = useState(false);
@@ -198,6 +202,19 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
     } finally {
       setSendingMessage(false);
     }
+  };
+
+  // Helper function to find the most recent replyable message (seller message with externalMessageId)
+  // that came before a given message index
+  const findReplyableMessageId = (messageIndex: number): string | null => {
+    // Look backwards from the current message to find the most recent seller message with externalMessageId
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.sender === 'seller' && msg.externalMessageId) {
+        return msg.id;
+      }
+    }
+    return null;
   };
 
   const handleRetry = async (failedMessage: DisplayMessage) => {
@@ -476,7 +493,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
               </div>
             ) : (
               <div className="space-y-4">
-                {messages.map((message) => {
+                {messages.map((message, messageIndex) => {
                   const isUser = message.sender === 'user';
                   const isAgent = message.sender === 'agent';
                   const isSeller = message.sender === 'seller';
@@ -530,6 +547,17 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
                             )}
                           </div>
 
+                          {/* AI agent send email button */}
+                          {isAgent && selectedThreadId && !hasError && user?.gmailConnected && (
+                            <div className="mt-2">
+                              <SendEmailButton
+                                messageId={message.id}
+                                messageContent={message.content}
+                                replyableMessageId={findReplyableMessageId(messageIndex)}
+                              />
+                            </div>
+                          )}
+
                           {/* Seller track offer button */}
                           {isSeller && selectedThreadId && !hasError && (
                             <div className="mt-2">
@@ -575,13 +603,15 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
                 placeholder="Type a message... (Ctrl/Cmd+Enter to send)"
                 disabled={sendingMessage}
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={sendingMessage || !messageInput.trim()}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                {sendingMessage ? 'Sending...' : 'Send'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage || !messageInput.trim()}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {sendingMessage ? 'Sending...' : 'Send'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

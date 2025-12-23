@@ -1,8 +1,10 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   ChevronsUpDown,
   LogOut,
+  Mail,
   User,
 } from "lucide-react"
 
@@ -22,6 +24,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
+import { gmailAPI } from "@/lib/api"
+import { toast } from "sonner"
 
 export function NavUser({
   user,
@@ -33,6 +37,47 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { logout } = useAuth()
+  const [gmailConnected, setGmailConnected] = useState(false)
+  const [gmailEmail, setGmailEmail] = useState<string>()
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchGmailStatus = async () => {
+      try {
+        const status = await gmailAPI.getStatus()
+        setGmailConnected(status.connected)
+        setGmailEmail(status.gmailEmail)
+      } catch (error) {
+        console.error('Failed to fetch Gmail status:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGmailStatus()
+  }, [])
+
+  const handleGmailConnect = async () => {
+    try {
+      const { authUrl } = await gmailAPI.getAuthUrl()
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Failed to get Gmail auth URL:', error)
+      toast.error('Failed to start Gmail connection')
+    }
+  }
+
+  const handleGmailDisconnect = async () => {
+    try {
+      await gmailAPI.disconnect()
+      setGmailConnected(false)
+      setGmailEmail(undefined)
+      toast.success('Gmail disconnected successfully')
+    } catch (error) {
+      console.error('Failed to disconnect Gmail:', error)
+      toast.error('Failed to disconnect Gmail')
+    }
+  }
 
   return (
     <SidebarMenu>
@@ -72,6 +117,26 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              {!loading && (
+                <>
+                  {gmailConnected ? (
+                    <DropdownMenuItem onClick={handleGmailDisconnect}>
+                      <Mail />
+                      <div className="flex flex-col">
+                        <span>Gmail Connected ✓</span>
+                        {gmailEmail && (
+                          <span className="text-xs text-muted-foreground">{gmailEmail}</span>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={handleGmailConnect}>
+                      <Mail />
+                      Connect Gmail
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
               <DropdownMenuItem onClick={logout}>
                 <LogOut />
                 Log out

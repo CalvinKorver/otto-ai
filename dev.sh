@@ -23,20 +23,52 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-# Start backend
-echo -e "${GREEN}Starting backend server...${NC}"
+# Start backend with hot reload
+echo -e "${GREEN}Starting backend server with hot reload...${NC}"
 cd backend
 
-# Test backend compilation first
-if ! go build -o /dev/null cmd/server/main.go 2>&1; then
-    echo -e "${RED}✗ Backend compilation failed!${NC}"
-    echo -e "${YELLOW}Fix the errors above and try again.${NC}"
-    cd ..
-    exit 1
+# Add Go bin directories to PATH
+GOPATH=$(go env GOPATH 2>/dev/null || echo "$HOME/go")
+export PATH="$PATH:$GOPATH/bin:$HOME/go/bin"
+
+# Function to find air binary
+find_air() {
+    if command -v air &> /dev/null; then
+        echo "air"
+        return 0
+    fi
+    # Check common Go bin locations
+    for path in "$GOPATH/bin/air" "$HOME/go/bin/air"; do
+        if [ -f "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Check if air is installed
+AIR_CMD=$(find_air)
+if [ -z "$AIR_CMD" ]; then
+    echo -e "${YELLOW}⚠ Air (hot reload) is not installed.${NC}"
+    echo -e "${YELLOW}Installing air...${NC}"
+    go install github.com/air-verse/air@latest
+    
+    # Try to find air again after installation
+    AIR_CMD=$(find_air)
+    if [ -z "$AIR_CMD" ]; then
+        echo -e "${RED}✗ Failed to install or find air.${NC}"
+        echo -e "${YELLOW}Please install manually: go install github.com/air-verse/air@latest${NC}"
+        echo -e "${YELLOW}Make sure $GOPATH/bin or ~/go/bin is in your PATH${NC}"
+        echo -e "${YELLOW}Or run without hot reload: go run cmd/server/main.go${NC}"
+        cd ..
+        exit 1
+    fi
+    echo -e "${GREEN}✓ Air installed successfully!${NC}"
 fi
 
-# If compilation succeeds, run the server
-go run cmd/server/main.go &
+# Run backend with air (hot reload)
+$AIR_CMD &
 BACKEND_PID=$!
 cd ..
 

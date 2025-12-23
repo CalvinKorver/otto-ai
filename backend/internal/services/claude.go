@@ -61,13 +61,16 @@ Guidelines:
 - Be firm but polite in negotiations
 - Work towards the best price and terms for the buyer
 - Be professional and concise
+- Keep responses around 500 characters by default unless the user explicitly asks for something longer
 - Help the user craft effective negotiation messages
 
 - When you have competing offers, use them as leverage without naming specific sellers or offers unless it will meet the goals of the negotiation and purchase.
 
+CRITICAL: When the user asks you to draft, write, or create a message, you must return ONLY the message content itself. Do not include any explanations, prefixes like "Here's a draft:", meta-commentary, or any other text. Return ONLY the message that should be sent to the seller, nothing else.
+
 You should respond as best as you can to whatever the user asks. 
 Sometimes they will just chat with you to understand how to best respond. 
-Other times they will ask you to draft messages. 
+Other times they will ask you to draft messages - in those cases, return ONLY the message content. 
 You are here to serve the user. `, year, make, model, sellerName, competitiveContext)
 
 	// Build conversation history
@@ -142,6 +145,36 @@ You are here to serve the user. `, year, make, model, sellerName, competitiveCon
 	}
 
 	responseText := strings.TrimSpace(message.Content[0].Text)
+
+	// Remove common prefixes that might indicate explanations or meta-commentary
+	// This is a safeguard in case Claude still adds explanatory text
+	// All these prefixes end with a colon, so we can find the colon position
+	prefixes := []string{
+		"Here's a draft:",
+		"Here's the draft:",
+		"Here is a draft:",
+		"Here is the draft:",
+		"Draft message:",
+		"Message draft:",
+		"Here's the message:",
+		"Here is the message:",
+		"Here's your message:",
+		"Here is your message:",
+	}
+	
+	responseLower := strings.ToLower(responseText)
+	for _, prefix := range prefixes {
+		prefixLower := strings.ToLower(prefix)
+		if strings.HasPrefix(responseLower, prefixLower) {
+			// Find the colon position in the original text (should be at len(prefix)-1)
+			// Remove everything up to and including the colon, then trim whitespace
+			colonPos := strings.Index(responseText, ":")
+			if colonPos >= 0 && colonPos < len(responseText) {
+				responseText = strings.TrimSpace(responseText[colonPos+1:])
+			}
+			break
+		}
+	}
 
 	// Log the response
 	fmt.Printf("\n========== CLAUDE API RESPONSE ==========\n")

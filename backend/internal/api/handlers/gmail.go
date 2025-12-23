@@ -114,8 +114,8 @@ func (h *GmailHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to dashboard
-	http.Redirect(w, r, h.frontendURL+"/dashboard", http.StatusTemporaryRedirect)
+	// Redirect to dashboard with success parameter
+	http.Redirect(w, r, h.frontendURL+"/dashboard?gmail_connected=true", http.StatusTemporaryRedirect)
 }
 
 // GetGmailStatus returns whether user has Gmail connected
