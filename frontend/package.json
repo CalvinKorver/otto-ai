@@ -6,6 +6,8 @@
     "node": ">=20.9.0"
   },
   "scripts": {
+    "check-node": "node -e \"const major = parseInt(process.version.match(/^v(\\d+)/)[1]); const minor = parseInt(process.version.match(/^v\\d+\\.(\\d+)/)[1]); if(major < 20 || (major === 20 && minor < 9)) { console.error('❌ Node.js >= 20.9.0 is required. Current version:', process.version); console.error('💡 Run: nvm use (or nvm install 20.18.0 && nvm use 20.18.0)'); process.exit(1); } else { console.log('✅ Node.js version', process.version, 'is compatible'); }\"",
+    "prebuild": "npm run check-node",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
