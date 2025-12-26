@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	log.Println("Starting Agent Auto API Server...")
+	log.Println("Starting Lolo AI API Server...")
 
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
@@ -121,7 +121,7 @@ func main() {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"message":"Agent Auto API","version":"1.0.0"}`))
+			w.Write([]byte(`{"message":"Lolo AI API","version":"1.0.0"}`))
 		})
 
 		// Auth routes
@@ -139,6 +139,7 @@ func main() {
 			r.Use(middleware.AuthMiddleware(authService))
 			r.Get("/", preferencesHandler.GetPreferences)
 			r.Post("/", preferencesHandler.CreatePreferences)
+			r.Put("/", preferencesHandler.UpdatePreferences)
 		})
 
 		// Thread routes (all protected)

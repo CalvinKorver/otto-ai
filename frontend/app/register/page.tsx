@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -18,7 +20,18 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
   const { register: registerUser } = useAuth();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use dark color logo in light mode, original in dark mode
+  const logoSrc = mounted && theme === 'light' 
+    ? '/lolo-logo-dark-color-v1.png' 
+    : '/lolo-logo-v2.png';
 
   const {
     register,
@@ -44,8 +57,15 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="max-w-md w-full bg-card rounded-lg shadow-md border border-border p-8">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-4">🚗</div>
-          <h1 className="text-2xl font-bold text-card-foreground mb-2">Agent Auto</h1>
+          <div className="mb-4 flex justify-center">
+            <Image
+              src={logoSrc}
+              alt="Lolo AI"
+              width={200}
+              height={60}
+              className="h-12 w-auto"
+            />
+          </div>          
           <p className="text-sm text-muted-foreground">Create your account</p>
         </div>
 

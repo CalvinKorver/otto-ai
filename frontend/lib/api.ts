@@ -144,6 +144,11 @@ export const preferencesAPI = {
     const response = await api.post<UserPreferences>('/preferences', { year, make, model });
     return response.data;
   },
+
+  update: async (year: number, make: string, model: string): Promise<UserPreferences> => {
+    const response = await api.put<UserPreferences>('/preferences', { year, make, model });
+    return response.data;
+  },
 };
 
 // Thread API

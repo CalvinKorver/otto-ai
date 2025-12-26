@@ -1,4 +1,4 @@
-# Project Instructions (Agent Auto)
+# Project Instructions (Lolo AI)
 
 ## Deployment & Infrastructure
 - Backend: Railway (`https://agent-auto-production.up.railway.app/`, port 8080). Dockerfile in repo root; Render alternative build `go build -o bin/server cmd/server/main.go`, start `./bin/server`.

@@ -1,4 +1,4 @@
-## Cursor Default Notes (Agent Auto)
+## Cursor Default Notes (Lolo AI)
 - Purpose: AI car-buying assistant. Backend: Go/chi + Postgres + GORM + Claude; Frontend: Next.js 14 TS + Tailwind + shadcn.
 - Run all dev: `./dev.sh` (Air hot reload + `npm run dev`). Backend only: `cd backend && go run cmd/server/main.go`. Frontend only: `cd frontend && npm run dev`. Health: `curl http://localhost:8080/health`.
 - Backend entry: `backend/cmd/server/main.go`; config env reading in `backend/internal/config/config.go`; services in `backend/internal/services/`; handlers in `backend/internal/api/handlers/`; models/db in `backend/internal/db`.

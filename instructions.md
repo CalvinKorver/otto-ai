@@ -1,4 +1,4 @@
-## Agent Auto Repo Notes
+## Lolo AI Repo Notes
 
 - Purpose: AI-assisted car-buying app. Backend Go API, frontend Next.js 14 (app router + Tailwind + shadcn). Production: backend on Railway, frontend on https://www.agentauto.com.
 

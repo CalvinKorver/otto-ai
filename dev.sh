@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Development startup script for car-buyer
+# Development startup script for Lolo AI
 # Starts both frontend and backend servers
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}Starting car-buyer development environment...${NC}\n"
+echo -e "${BLUE}Starting Lolo AI development environment...${NC}\n"
 
 # Function to cleanup background processes on exit
 cleanup() {

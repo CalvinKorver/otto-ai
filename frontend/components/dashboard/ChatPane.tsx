@@ -510,9 +510,9 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
                           alt="Agent avatar"
                           width={40}
                           height={40}
-                          className="rounded-full border border-border bg-card shrink-0 -translate-y-4 -translate-x-4"
+                          className="rounded-full border border-border bg-card shrink-0 -translate-y-2 -translate-x-3"
                         />
-                        <div className="space-y-2 text-lg leading-relaxed text-foreground">
+                        <div className="space-y-2 text-base leading-relaxed text-foreground">
                           <div className="whitespace-pre-wrap break-words">{message.content}</div>
                           <div className="text-xs text-muted-foreground">
                             {new Date(message.timestamp).toLocaleString()}

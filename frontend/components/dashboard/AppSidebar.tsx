@@ -171,10 +171,6 @@ export function AppSidebar({
               <div className="flex flex-col gap-2 px-2">
                 {loadingInbox ? (
                   <div className="px-2 py-2 text-sm text-muted-foreground">Loading...</div>
-                ) : inboxMessages.length === 0 ? (
-                  <div className="px-2 py-2 text-sm text-muted-foreground italic">
-                    No new messages
-                  </div>
                 ) : (
                   inboxMessages.map((message) => (
                     <SidebarInboxItem

@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   ChevronsUpDown,
   LogOut,
   Mail,
+  Settings,
   User,
 } from "lucide-react"
 
@@ -37,6 +39,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { logout } = useAuth()
+  const router = useRouter()
   const [gmailConnected, setGmailConnected] = useState(false)
   const [gmailEmail, setGmailEmail] = useState<string>()
   const [loading, setLoading] = useState(true)
@@ -92,7 +95,7 @@ export function NavUser({
                 <User className="h-4 w-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-lg font-bold">Lolo AI</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -137,6 +140,10 @@ export function NavUser({
                   )}
                 </>
               )}
+              <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <Settings />
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={logout}>
                 <LogOut />
                 Log out

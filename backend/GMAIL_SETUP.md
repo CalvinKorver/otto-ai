@@ -13,7 +13,7 @@ This guide will help you set up Gmail OAuth integration so users can send email 
 ### 1.1 Create Google Cloud Project
 1. Go to https://console.cloud.google.com
 2. Click "Create Project"
-3. Name: "Car Buyer App" (or your preference)
+3. Name: "Lolo AI" (or your preference)
 4. Click "Create"
 
 ### 1.2 Enable Gmail API

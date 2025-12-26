@@ -33,7 +33,7 @@ export default function JourneyStateStep({ onSelectJourney, isActive }: JourneyS
 
   return (
     <div className="space-y-4">
-      {/* Polly's message and buttons - animate in together */}
+      {/* Lolo AI's message and buttons - animate in together */}
       {showContent && (
         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-1000">
           <div className="flex gap-3 items-start">

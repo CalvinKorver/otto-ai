@@ -29,7 +29,7 @@ export default function LaunchPadStep({ vehicleData, onComplete }: LaunchPadStep
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Polly's message - no bubble, just text like ChatPane */}
+      {/* Lolo AI's message - no bubble, just text like ChatPane */}
       <div className="flex items-start gap-1">
         <PollyAvatar />
         <div className="space-y-2 text-lg leading-relaxed text-foreground">
