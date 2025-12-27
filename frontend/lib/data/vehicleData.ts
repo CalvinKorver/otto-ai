@@ -23,6 +23,7 @@ export const VEHICLE_MAKES = [
   'Lincoln',
   'Mazda',
   'Mercedes-Benz',
+  'Mini',
   'Nissan',
   'Porsche',
   'Ram',
@@ -33,8 +34,8 @@ export const VEHICLE_MAKES = [
   'Volvo',
 ] as const;
 
-// Generate years from 2015 to 2030
+// Generate years from 2000 to 2026
 export const VEHICLE_YEARS = Array.from(
-  { length: 2030 - 2015 + 1 },
-  (_, i) => 2030 - i
+  { length: 2026 - 2000 + 1 },
+  (_, i) => 2026 - i
 );
