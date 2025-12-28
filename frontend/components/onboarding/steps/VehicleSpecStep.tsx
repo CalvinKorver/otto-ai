@@ -9,7 +9,8 @@ import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import PollyAvatar from '../PollyAvatar';
-import { VEHICLE_MAKES, VEHICLE_YEARS } from '@/lib/data/vehicleData';
+import { VEHICLE_YEARS } from '@/lib/data/vehicleData';
+import { modelsAPI, VehicleModelsResponse } from '@/lib/api';
 
 const vehicleSchema = z.object({
   make: z.string().min(1, 'Make is required'),
@@ -33,6 +34,10 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
     model?: string;
     year?: number;
   }>({});
+  const [vehicleModels, setVehicleModels] = useState<VehicleModelsResponse>({});
+  const [makes, setMakes] = useState<string[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
 
   const {
     register,
@@ -53,6 +58,33 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
   const modelValue = watch('model');
   const yearValue = watch('year');
   const modelHasValue = (modelValue ?? '').trim().length > 0;
+
+  // Fetch vehicle models on mount
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        setIsLoadingModels(true);
+        setModelsError(null);
+        const data = await modelsAPI.getModels();
+        setVehicleModels(data);
+        // Extract and sort makes
+        const makesList = Object.keys(data).sort();
+        setMakes(makesList);
+      } catch (error) {
+        console.error('Failed to fetch vehicle models:', error);
+        setModelsError('Failed to load vehicle makes. Please refresh the page.');
+        // Fallback to hardcoded makes if API fails
+        setMakes(['Acura', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jaguar', 'Jeep', 'Kia', 'Land Rover', 'Lexus', 'Lincoln', 'Mazda', 'Mercedes-Benz', 'Mini', 'Nissan', 'Porsche', 'Ram', 'Subaru', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo']);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  // Get available models for selected make
+  const availableModels = makeValue ? vehicleModels[makeValue] || [] : [];
 
   // Progressive disclosure logic - only when active
   useEffect(() => {
@@ -118,12 +150,12 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
                   name="make"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels}>
                       <SelectTrigger id="make" className="w-full">
-                        <SelectValue placeholder="Choose a make..." />
+                        <SelectValue placeholder={isLoadingModels ? 'Loading makes...' : 'Choose a make...'} />
                       </SelectTrigger>
                       <SelectContent>
-                        {VEHICLE_MAKES.map((make) => (
+                        {makes.map((make) => (
                           <SelectItem key={make} value={make}>
                             {make}
                           </SelectItem>
@@ -132,6 +164,7 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
                     </Select>
                   )}
                 />
+                {modelsError && <p className="text-sm text-destructive mt-1">{modelsError}</p>}
                 <FieldError>{errors.make?.message}</FieldError>
               </Field>
             </div>
@@ -139,13 +172,34 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
             {showModel && (
               <div className="pl-13 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Field>
-                  <FieldLabel htmlFor="model">Model Name</FieldLabel>
-                  <Input
-                    id="model"
-                    type="text"
-                    {...register('model')}
-                    placeholder="e.g., CX-90, Camry, Model 3"
-                  />
+                  <FieldLabel htmlFor="model">Select Model</FieldLabel>
+                  {availableModels.length > 0 ? (
+                    <Controller
+                      name="model"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger id="model" className="w-full">
+                            <SelectValue placeholder="Choose a model..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableModels.map((model) => (
+                              <SelectItem key={model} value={model}>
+                                {model}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  ) : (
+                    <Input
+                      id="model"
+                      type="text"
+                      {...register('model')}
+                      placeholder="e.g., CX-90, Camry, Model 3"
+                    />
+                  )}
                   <FieldError>{errors.model?.message}</FieldError>
                 </Field>
 

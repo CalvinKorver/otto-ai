@@ -67,6 +67,10 @@ func main() {
 
 	emailService := services.NewEmailService(database.DB, cfg.MailgunAPIKey, cfg.MailgunDomain, gmailService)
 
+	// Initialize models service and start daily fetch
+	modelsService := services.NewModelsService()
+	modelsService.StartDailyFetch()
+
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService, gmailService)
 	preferencesHandler := handlers.NewPreferencesHandler(preferencesService)
@@ -76,6 +80,7 @@ func main() {
 	gmailHandler := handlers.NewGmailHandler(gmailService, cfg.AllowedOrigins[0]) // Use first allowed origin as frontend URL
 	offerHandler := handlers.NewOfferHandler(database)
 	dashboardHandler := handlers.NewDashboardHandler(threadService, messageService, database)
+	modelsHandler := handlers.NewModelsHandler(modelsService)
 
 	// Initialize router
 	r := chi.NewRouter()
@@ -169,6 +174,7 @@ func main() {
 		r.Route("/offers", func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware(authService))
 			r.Get("/", offerHandler.GetAllOffers)
+			r.Delete("/{id}", offerHandler.DeleteOffer)
 		})
 
 		// Inbox message routes (all protected)
@@ -199,6 +205,9 @@ func main() {
 			r.Post("/email/inbound", emailHandler.InboundEmail)
 			r.Post("/email/test", emailHandler.TestInboundEmail) // For testing without Mailgun
 		})
+
+		// Models route (public - no auth)
+		r.Get("/models", modelsHandler.GetModels)
 	})
 
 	// OAuth callback route (public - outside /api/v1)

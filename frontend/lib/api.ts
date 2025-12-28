@@ -117,6 +117,10 @@ export interface DashboardResponse {
   offers: TrackedOffer[];
 }
 
+export interface VehicleModelsResponse {
+  [make: string]: string[];
+}
+
 // Auth API
 export const authAPI = {
   register: async (email: string, password: string): Promise<AuthResponse> => {
@@ -229,6 +233,10 @@ export const offerAPI = {
     const response = await api.get<{ offers: TrackedOffer[] }>('/offers');
     return response.data.offers;
   },
+
+  deleteOffer: async (offerId: string): Promise<void> => {
+    await api.delete(`/offers/${offerId}`);
+  },
 };
 
 // Gmail API
@@ -260,6 +268,14 @@ export const gmailAPI = {
 export const dashboardAPI = {
   getDashboard: async (): Promise<DashboardResponse> => {
     const response = await api.get<DashboardResponse>('/dashboard');
+    return response.data;
+  },
+};
+
+// Models API
+export const modelsAPI = {
+  getModels: async (): Promise<VehicleModelsResponse> => {
+    const response = await api.get<VehicleModelsResponse>('/models');
     return response.data;
   },
 };

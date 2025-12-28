@@ -10,6 +10,7 @@ interface DashboardPaneProps {
   offers: TrackedOffer[];
   threads: Thread[];
   onNavigateToThread?: (threadId: string) => void;
+  onOfferDeleted?: () => void;
 }
 
 // Utility function to parse price from offer text
@@ -78,7 +79,30 @@ function GradientBar({ targetPrice, marketAverage }: { targetPrice: number; mark
   );
 }
 
-export default function DashboardPane({ offers, threads, onNavigateToThread }: DashboardPaneProps) {
+export default function DashboardPane({ offers, threads, onNavigateToThread, onOfferDeleted }: DashboardPaneProps) {
+  const [deletingOfferId, setDeletingOfferId] = useState<string | null>(null);
+
+  const handleDeleteOffer = async (offerId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click navigation
+    
+    if (!confirm('Are you sure you want to delete this offer?')) {
+      return;
+    }
+
+    setDeletingOfferId(offerId);
+    try {
+      await offerAPI.deleteOffer(offerId);
+      toast.success('Offer deleted successfully');
+      if (onOfferDeleted) {
+        onOfferDeleted();
+      }
+    } catch (error) {
+      console.error('Failed to delete offer:', error);
+      toast.error('Failed to delete offer. Please try again.');
+    } finally {
+      setDeletingOfferId(null);
+    }
+  };
   const { user } = useAuth();
   const preferences = user?.preferences;
 
@@ -269,12 +293,15 @@ export default function DashboardPane({ offers, threads, onNavigateToThread }: D
                         <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
                           Gap to Market
                         </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-foreground w-16">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {processedOffers.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                          <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                             No tracked offers yet
                           </td>
                         </tr>
@@ -337,6 +364,16 @@ export default function DashboardPane({ offers, threads, onNavigateToThread }: D
                               ) : (
                                 <span className="text-muted-foreground">—</span>
                               )}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <button
+                                onClick={(e) => handleDeleteOffer(offer.id, e)}
+                                disabled={deletingOfferId === offer.id}
+                                className="p-2 hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-destructive"
+                                title="Delete offer"
+                              >
+                                <IconTrash className="h-4 w-4" />
+                              </button>
                             </td>
                           </tr>
                         ))
