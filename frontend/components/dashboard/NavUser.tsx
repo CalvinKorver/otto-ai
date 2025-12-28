@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
+import { useTheme } from "next-themes"
 import {
   ChevronsUpDown,
   LogOut,
@@ -40,9 +42,15 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const { logout } = useAuth()
   const router = useRouter()
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [gmailConnected, setGmailConnected] = useState(false)
   const [gmailEmail, setGmailEmail] = useState<string>()
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const fetchGmailStatus = async () => {
@@ -82,6 +90,11 @@ export function NavUser({
     }
   }
 
+  // Use dark color logo in light mode, original in dark mode
+  const logoSrc = mounted && theme === 'light' 
+    ? '/lolo-logo-dark-color-v1.png' 
+    : '/lolo-logo-v2.png'
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -91,12 +104,16 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                <User className="h-4 w-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-lg font-bold">Lolo AI</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <div className="h-8 w-auto flex items-center flex-1">
+                {mounted && (
+                  <Image
+                    src={logoSrc}
+                    alt="Lolo AI"
+                    width={80}
+                    height={24}
+                    className="h-6 w-auto"
+                  />
+                )}
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>

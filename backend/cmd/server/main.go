@@ -75,6 +75,7 @@ func main() {
 	emailHandler := handlers.NewEmailHandler(emailService, cfg.MailgunWebhookSigningKey, database.DB)
 	gmailHandler := handlers.NewGmailHandler(gmailService, cfg.AllowedOrigins[0]) // Use first allowed origin as frontend URL
 	offerHandler := handlers.NewOfferHandler(database)
+	dashboardHandler := handlers.NewDashboardHandler(threadService, messageService, database)
 
 	// Initialize router
 	r := chi.NewRouter()
@@ -140,6 +141,12 @@ func main() {
 			r.Get("/", preferencesHandler.GetPreferences)
 			r.Post("/", preferencesHandler.CreatePreferences)
 			r.Put("/", preferencesHandler.UpdatePreferences)
+		})
+
+		// Dashboard route (protected) - consolidated endpoint for threads, inbox messages, and offers
+		r.Route("/dashboard", func(r chi.Router) {
+			r.Use(middleware.AuthMiddleware(authService))
+			r.Get("/", dashboardHandler.GetDashboard)
 		})
 
 		// Thread routes (all protected)

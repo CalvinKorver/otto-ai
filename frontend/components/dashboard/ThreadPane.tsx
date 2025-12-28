@@ -257,7 +257,7 @@ export default function ThreadPane({
       {showEmailDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowEmailDialog(false)}>
           <div className="bg-popover rounded-lg p-6 max-w-md w-full mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold text-popover-foreground mb-4">Forward Emails Here</h2>
+            <h2 className="text-xl font-bold text-popover-foreground mb-4">Forward Emails</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Forward or BCC emails from sellers to this address and they&apos;ll appear in your inbox:
             </p>

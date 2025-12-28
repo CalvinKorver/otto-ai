@@ -111,6 +111,12 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface DashboardResponse {
+  threads: Thread[];
+  inboxMessages: InboxMessage[];
+  offers: TrackedOffer[];
+}
+
 // Auth API
 export const authAPI = {
   register: async (email: string, password: string): Promise<AuthResponse> => {
@@ -247,5 +253,13 @@ export const gmailAPI = {
 
   createDraft: async (messageId: string, content: string): Promise<void> => {
     await api.post(`/messages/${messageId}/draft`, { content });
+  },
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  getDashboard: async (): Promise<DashboardResponse> => {
+    const response = await api.get<DashboardResponse>('/dashboard');
+    return response.data;
   },
 };
