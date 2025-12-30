@@ -89,7 +89,7 @@ export default function LandingPage() {
       {/* Benefits Section */}
       <section className="bg-gray-100 dark:bg-gray-800 py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">Why Choose AgentAuto?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">Why Choose OttoAI?</h2>
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <BenefitCard
               icon={<TrendingUp className="size-8 text-primary" />}
@@ -99,7 +99,7 @@ export default function LandingPage() {
             <BenefitCard
               icon={<MessageSquare className="size-8 text-primary" />}
               title="You Stay in Control"
-              description="AgentAuto assists you, never replaces you. Review AI suggestions, approve messages, and make all final decisions."
+              description="OttoAI assists you, never replaces you. Review AI suggestions, approve messages, and make all final decisions."
             />
             <BenefitCard
               icon={<Car className="size-8 text-primary" />}
@@ -119,7 +119,7 @@ export default function LandingPage() {
       <section className="container mx-auto px-4 py-20 text-center">
         <h2 className="text-4xl font-bold mb-6 text-foreground">Ready to Find Your Next Car?</h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of satisfied customers who found their perfect vehicle through AgentAuto.
+          Join thousands of satisfied customers who found their perfect vehicle through OttoAI.
         </p>
         <Link href="/register">
           <Button size="lg">Get Started Today</Button>
@@ -129,7 +129,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 AgentAuto. All rights reserved.</p>
+          <p>&copy; 2025 OttoAI. All rights reserved.</p>
         </div>
       </footer>
     </div>
