@@ -6,3 +6,6 @@ backend/server
 
 # Temporary files
 backend/tmp/
+
+# Large SQL data files
+backend/Year-Make-Model-Trim-Basic-Specs-new-cars-only-by-Teoalida.sql
