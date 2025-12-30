@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Otto",
+  title: "Otto AI",
   description: "AI-powered car buying assistant",
 };
 
