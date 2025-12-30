@@ -1,8 +1,26 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
+
 interface OnboardingSidebarProps {
   currentStep: number;
 }
 
 export default function OnboardingSidebar({ currentStep }: OnboardingSidebarProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use dark logo in light mode, light logo in dark mode
+  const logoSrc = mounted && resolvedTheme === 'light' 
+    ? '/logo-dark-v2.png' 
+    : '/logo-light-v2.png';
+
   const steps = [
     { label: 'Welcome!', step: 0 },
     { label: 'Quick Questions', step: 1 },
@@ -12,7 +30,13 @@ export default function OnboardingSidebar({ currentStep }: OnboardingSidebarProp
   return (
     <div className="w-full lg:w-64 bg-card border-r border-border p-6 flex lg:flex-col gap-6">
       <div className="hidden lg:block mb-8">
-        <h2 className="text-xl poppins-regular text-card-foreground">Otto</h2>
+        <Image
+          src={logoSrc}
+          alt="Otto"
+          width={200}
+          height={60}
+          className="h-12 w-auto"
+        />
       </div>
 
       <nav className="flex lg:flex-col gap-4 lg:gap-6 flex-1 lg:flex-none">
