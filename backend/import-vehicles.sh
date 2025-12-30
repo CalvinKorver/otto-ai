@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Script to import vehicle data into the database
 # Usage: ./import-vehicles.sh <path-to-sql-file> [database-url]
