@@ -22,7 +22,7 @@ export default function LandingPage() {
 
   // Check if redirect to waiting page is enabled
   const redirectToWaiting = process.env.NEXT_PUBLIC_REDIRECT_TO_WAITING === 'True';
-  const loginHref = redirectToWaiting ? '/waiting' : '/login';
+  const loginHref = '/login'; // Always allow direct navigation to login
   const registerHref = redirectToWaiting ? '/waiting' : '/register';
 
   return (
@@ -40,9 +40,11 @@ export default function LandingPage() {
             />
           </div>
           <div className="flex gap-3">
-            <Link href={loginHref}>
-              <Button variant="ghost">Sign In</Button>
-            </Link>
+            {!redirectToWaiting && (
+              <Link href={loginHref}>
+                <Button variant="ghost">Sign In</Button>
+              </Link>
+            )}
             <Link href={registerHref}>
               <Button>Get Started</Button>
             </Link>

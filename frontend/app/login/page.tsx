@@ -30,12 +30,8 @@ export default function LoginPage() {
     setMounted(true);
   }, []);
 
-  // Redirect to waiting page if flag is enabled
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_REDIRECT_TO_WAITING === 'True') {
-      router.push('/waiting');
-    }
-  }, [router]);
+  // Note: We don't redirect here to allow admins and registered users to access login directly
+  // even when NEXT_PUBLIC_REDIRECT_TO_WAITING is enabled
 
   // Use dark logo in light mode, light logo in dark mode
   const logoSrc = mounted && resolvedTheme === 'light' 
