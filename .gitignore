@@ -13,3 +13,7 @@ backend/Year-Make-Model-Trim-Basic-Specs-new-cars-only-by-Teoalida.sql
 # Planning documents
 GMAIL_FRONTEND_PLAN.md
 backend/GMAIL_SETUP.md
+
+# Testing documentation
+backend/TESTING.md
+backend/TESTING_VEHICLE_DB.md
