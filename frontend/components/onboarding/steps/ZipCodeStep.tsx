@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Field, FieldLabel, FieldError } from '@/components/ui/field';
+import { Field, FieldError } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
@@ -54,10 +54,9 @@ export default function ZipCodeStep({ onComplete, isActive }: ZipCodeStepProps) 
   // If completed (not active), show condensed summary
   if (!isActive && userResponse) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="animate-in fade-in duration-500 -mt-4">
         <div className="flex justify-end">
           <div className="max-w-[70%]">
-            <div className="text-xs text-muted-foreground mb-1 text-right">You</div>
             <div className="bg-card text-card-foreground border border-border rounded-lg px-4 py-3">
               <div className="text-sm">{userResponse}</div>
             </div>
@@ -74,24 +73,24 @@ export default function ZipCodeStep({ onComplete, isActive }: ZipCodeStepProps) 
           <div className="flex items-start gap-3 mb-2">
             <PollyAvatar />
             <div className="text-sm leading-relaxed text-foreground">
-              <p className="text-sm">One last question: What Zip Code are you looking in?</p>
+              <span className="text-sm flex items-center gap-1">
+                One last question: What Zip Code are you looking in?
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Zip Code will help us show you results that are local to you</p>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              
             </div>
           </div>
 
           <div className="pl-13">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Field>
-                <div className="flex items-center gap-2">
-                  <FieldLabel htmlFor="zipCode">Zip Code</FieldLabel>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Zip Code will help us show you results that are local to you</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
                 <Input
                   id="zipCode"
                   type="text"

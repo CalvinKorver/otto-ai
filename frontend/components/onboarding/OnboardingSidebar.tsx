@@ -23,8 +23,8 @@ export default function OnboardingSidebar({ currentStep }: OnboardingSidebarProp
 
   const steps = [
     { label: 'Welcome!', step: 0 },
-    { label: 'Quick Questions', step: 1 },
-    { label: 'Lets go', step: 2 },
+    { label: 'Make & Model', step: 1 },
+    { label: "Get Started", step: 2 },
   ];
 
   return (
@@ -33,9 +33,9 @@ export default function OnboardingSidebar({ currentStep }: OnboardingSidebarProp
         <Image
           src={logoSrc}
           alt="Otto"
-          width={200}
-          height={60}
-          className="h-12 w-auto"
+          width={140}
+          height={40}
+          className="h-8 w-auto"
         />
       </div>
 

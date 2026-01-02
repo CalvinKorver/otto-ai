@@ -27,10 +27,11 @@ interface VehicleSpecStepProps {
 }
 
 export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecStepProps) {
-  const [showMake] = useState(true);
+  const [showYear] = useState(true);
+  const [showMake, setShowMake] = useState(false);
   const [showModel, setShowModel] = useState(false);
-  const [showYear, setShowYear] = useState(false);
   const [showTrim, setShowTrim] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [userResponses, setUserResponses] = useState<{
     make?: string;
     model?: string;
@@ -56,7 +57,7 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
     defaultValues: {
       make: '',
       model: '',
-      year: 2024,
+      year: 2026,
       trim: '',
     },
   });
@@ -127,22 +128,22 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
 
   // Progressive disclosure logic - only when active
   useEffect(() => {
-    if (isActive && makeValue && !showModel) {
+    if (isActive && yearValue && !showMake) {
+      setUserResponses((prev) => ({ ...prev, year: yearValue }));
+      setTimeout(() => setShowMake(true), 300);
+    }
+  }, [yearValue, showMake, isActive]);
+
+  useEffect(() => {
+    if (isActive && makeValue && showMake && !showModel) {
       setUserResponses((prev) => ({ ...prev, make: makeValue }));
       setTimeout(() => setShowModel(true), 300);
     }
-  }, [makeValue, showModel, isActive]);
-
-  useEffect(() => {
-    if (isActive && modelHasValue && showModel && !showYear) {
-      setUserResponses((prev) => ({ ...prev, model: modelValue }));
-      setTimeout(() => setShowYear(true), 300);
-    }
-  }, [modelHasValue, modelValue, showModel, showYear, isActive]);
+  }, [makeValue, showModel, showMake, isActive]);
 
   // Fetch trims when make, model, and year are all selected
   useEffect(() => {
-    if (isActive && makeValue && modelValue && yearValue) {
+    if (isActive && makeValue && modelValue && yearValue && showModel) {
       const fetchTrims = async () => {
         try {
           setIsLoadingTrims(true);
@@ -166,13 +167,13 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
       setShowTrim(false);
       setTrims([]);
     }
-  }, [makeValue, modelValue, yearValue, isActive, showTrim, resetField]);
+  }, [makeValue, modelValue, yearValue, isActive, showModel, showTrim, resetField]);
 
   useEffect(() => {
-    if (isActive && yearValue && showYear) {
-      setUserResponses((prev) => ({ ...prev, year: yearValue }));
+    if (isActive && modelHasValue && showModel && !showTrim) {
+      setUserResponses((prev) => ({ ...prev, model: modelValue }));
     }
-  }, [yearValue, showYear, isActive]);
+  }, [modelHasValue, modelValue, showModel, showTrim, isActive]);
 
   useEffect(() => {
     if (isActive && trimValue && showTrim) {
@@ -186,6 +187,14 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
     // Find trim name from trims array
     const selectedTrim = trims.find(t => t.id === trimId);
     const trimName = trimId === null ? 'Unspecified' : (selectedTrim?.trimName || null);
+    // Update user responses to show the final message
+    setUserResponses({
+      make: data.make,
+      model: data.model,
+      year: data.year,
+      trim: trimName || 'Unspecified',
+    });
+    setSubmitted(true);
     onComplete({
       make: data.make,
       model: data.model,
@@ -195,18 +204,21 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
     });
   };
 
-  // If completed (not active), show condensed summary
-  if (!isActive && userResponses.make && userResponses.model && userResponses.year) {
+  // If completed (not active or submitted), show condensed summary
+  if ((!isActive || submitted) && userResponses.make && userResponses.model && userResponses.year) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-
+      <div className="animate-in fade-in duration-500 -mt-4">
         <div className="flex justify-end">
           <div className="max-w-[70%]">
-            <div className="text-xs text-muted-foreground mb-1 text-right">You</div>
             <div className="bg-card text-card-foreground border border-border rounded-lg px-4 py-3">
-              <div className="text-sm">
+              <div className="text-sm font-medium">
                 {userResponses.year} {userResponses.make} {userResponses.model}
               </div>
+              {userResponses.trim && userResponses.trim !== 'Unspecified' && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {userResponses.trim}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -217,8 +229,8 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Make Selection */}
-        {showMake && (
+        {/* Year Selection */}
+        {showYear && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-start gap-3 mb-2">
               <PollyAvatar />
@@ -229,143 +241,154 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
 
             <div className="pl-13">
               <Field>
-                <FieldLabel htmlFor="make">Select Make</FieldLabel>
+                <FieldLabel htmlFor="year">Select Year</FieldLabel>
                 <Controller
-                  name="make"
+                  name="year"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels}>
-                      <SelectTrigger id="make" className="w-full">
-                        <SelectValue placeholder={isLoadingModels ? 'Loading makes...' : 'Choose a make...'} />
+                    <Select
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      value={field.value?.toString()}
+                    >
+                      <SelectTrigger id="year" className="w-full">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {makes.length === 0 && !isLoadingModels && (
-                          <div className="p-2 text-sm text-muted-foreground">
-                            No makes available. Debug: makes={makes.length}, vehicleModels={Object.keys(vehicleModels).length}
-                          </div>
-                        )}
-                        {makes.map((make) => (
-                          <SelectItem key={make} value={make}>
-                            {make}
+                        {VEHICLE_YEARS.map((year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   )}
                 />
-                {modelsError && <p className="text-sm text-destructive mt-1">{modelsError}</p>}
-                <FieldError>{errors.make?.message}</FieldError>
+                <FieldError>{errors.year?.message}</FieldError>
               </Field>
             </div>
 
-            {showModel && (
+            {showMake && (
               <div className="pl-13 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Field>
-                  <FieldLabel htmlFor="model">Select Model</FieldLabel>
-                  {availableModels.length > 0 ? (
-                    <Controller
-                      name="model"
-                      control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger id="model" className="w-full">
-                            <SelectValue placeholder="Choose a model..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableModels.map((model) => (
-                              <SelectItem key={model} value={model}>
-                                {model}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  ) : (
-                    <Input
-                      id="model"
-                      type="text"
-                      {...register('model')}
-                      placeholder="e.g., CX-90, Camry, Model 3"
-                    />
-                  )}
-                  <FieldError>{errors.model?.message}</FieldError>
+                  <FieldLabel htmlFor="make">Select Make</FieldLabel>
+                  <Controller
+                    name="make"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels}>
+                        <SelectTrigger id="make" className="w-full">
+                          <SelectValue placeholder={isLoadingModels ? 'Loading makes...' : 'Choose a make...'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {makes.length === 0 && !isLoadingModels && (
+                            <div className="p-2 text-sm text-muted-foreground">
+                              No makes available. Debug: makes={makes.length}, vehicleModels={Object.keys(vehicleModels).length}
+                            </div>
+                          )}
+                          {makes.map((make) => (
+                            <SelectItem key={make} value={make}>
+                              {make}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {modelsError && <p className="text-sm text-destructive mt-1">{modelsError}</p>}
+                  <FieldError>{errors.make?.message}</FieldError>
                 </Field>
 
-                {showYear && (
-                  <div className="mt-4">
-                    <Field>
-                      <FieldLabel htmlFor="year">Select Year</FieldLabel>
-                      <Controller
-                        name="year"
-                        control={control}
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={(value) => field.onChange(Number(value))}
-                            value={field.value?.toString()}
-                          >
-                            <SelectTrigger id="year" className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {VEHICLE_YEARS.map((year) => (
-                                <SelectItem key={year} value={year.toString()}>
-                                  {year}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      <FieldError>{errors.year?.message}</FieldError>
-                    </Field>
-                  </div>
-                )}
-
-                {showTrim && (
+                {showModel && (
                   <div className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <Field>
-                      <FieldLabel htmlFor="trim">Select Trim</FieldLabel>
-                      <Controller
-                        name="trim"
-                        control={control}
-                        render={({ field }) => (
-                          <Select 
-                            onValueChange={field.onChange} 
-                            value={field.value}
-                            disabled={isLoadingTrims}
-                          >
-                            <SelectTrigger id="trim" className="w-full">
-                              <SelectValue placeholder={isLoadingTrims ? 'Loading trims...' : 'Choose a trim...'} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="unspecified">Unspecified</SelectItem>
-                              {trims.map((trim) => (
-                                <SelectItem key={trim.id} value={trim.id}>
-                                  {trim.trimName}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      <FieldError>{errors.trim?.message}</FieldError>
+                      <FieldLabel htmlFor="model">Select Model</FieldLabel>
+                      {availableModels.length > 0 ? (
+                        <Controller
+                          name="model"
+                          control={control}
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger id="model" className="w-full">
+                                <SelectValue placeholder="Choose a model..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableModels.map((model) => (
+                                  <SelectItem key={model} value={model}>
+                                    {model}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      ) : (
+                        <Input
+                          id="model"
+                          type="text"
+                          {...register('model')}
+                          placeholder="e.g., CX-90, Camry, Model 3"
+                        />
+                      )}
+                      <FieldError>{errors.model?.message}</FieldError>
                     </Field>
+
+                    {showTrim && (
+                      <div className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <Field>
+                          <FieldLabel htmlFor="trim">Select Trim</FieldLabel>
+                          <Controller
+                            name="trim"
+                            control={control}
+                            render={({ field }) => (
+                              <Select 
+                                onValueChange={field.onChange} 
+                                value={field.value}
+                                disabled={isLoadingTrims}
+                              >
+                                <SelectTrigger id="trim" className="w-full">
+                                  <SelectValue placeholder={isLoadingTrims ? 'Loading trims...' : 'Choose a trim...'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="unspecified">Unspecified</SelectItem>
+                                  {trims.map((trim) => (
+                                    <SelectItem key={trim.id} value={trim.id}>
+                                      {trim.trimName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          <FieldError>{errors.trim?.message}</FieldError>
+                        </Field>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
 
-            {userResponses.make && !isActive && (
+            {userResponses.year && !isActive && (
               <div className="flex justify-end mt-3 animate-in fade-in duration-300">
                 <div className="max-w-[70%]">
                   <div className="text-xs text-muted-foreground mb-1 text-right">You</div>
                   <div className="bg-card text-card-foreground border border-border rounded-lg px-4 py-2.5">
-                    <div className="text-sm">{userResponses.make}</div>
+                    <div className="text-sm">{userResponses.year}</div>
                   </div>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {showMake && userResponses.make && !isActive && (
+          <div className="flex justify-end mt-3 animate-in fade-in duration-300">
+            <div className="max-w-[70%]">
+              <div className="text-xs text-muted-foreground mb-1 text-right">You</div>
+              <div className="bg-card text-card-foreground border border-border rounded-lg px-4 py-2.5">
+                <div className="text-sm">{userResponses.make}</div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -375,17 +398,6 @@ export default function VehicleSpecStep({ onComplete, isActive }: VehicleSpecSte
               <div className="text-xs text-muted-foreground mb-1 text-right">You</div>
               <div className="bg-card text-card-foreground border border-border rounded-lg px-4 py-2.5">
                 <div className="text-sm">{userResponses.model}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showYear && userResponses.year && !isActive && (
-          <div className="flex justify-end mt-3 animate-in fade-in duration-300">
-            <div className="max-w-[70%]">
-              <div className="text-xs text-muted-foreground mb-1 text-right">You</div>
-              <div className="bg-card text-card-foreground border border-border rounded-lg px-4 py-2.5">
-                <div className="text-sm">{userResponses.year}</div>
               </div>
             </div>
           </div>

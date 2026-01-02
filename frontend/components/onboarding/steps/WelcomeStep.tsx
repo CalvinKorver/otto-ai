@@ -13,10 +13,11 @@ export default function WelcomeStep({ onNext, isActive }: WelcomeStepProps) {
       <div className="flex items-start gap-3">
         <PollyAvatar />
         <div className="space-y-1 text-sm leading-relaxed text-foreground">
-          <div className="font-semibold text-base">Welcome to Otto</div>
+          <div className="font-semibold text-base">Hi there</div>
           <p className="text-sm">
-            We&apos;re here to guide you through your car-buying journey. Our AI agent handles the
-            &quot;haggling&quot; so you can focus on the driving.
+            We&apos;re here to guide you through your car-buying journey. 
+            <br></br>
+            Our goal is to get you a fair price on the perfect car while saving you time and money.
           </p>
         </div>
       </div>
