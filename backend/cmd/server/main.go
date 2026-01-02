@@ -185,6 +185,7 @@ func main() {
 			r.Get("/", threadHandler.GetThreads)
 			r.Post("/", threadHandler.CreateThread)
 			r.Get("/{id}", threadHandler.GetThread)
+			r.Put("/{id}/read", threadHandler.MarkThreadAsRead)
 			r.Delete("/{id}", threadHandler.ArchiveThread)
 
 			// Message routes nested under threads
@@ -202,13 +203,6 @@ func main() {
 			r.Delete("/{id}", offerHandler.DeleteOffer)
 		})
 
-		// Inbox message routes (all protected)
-		r.Route("/inbox", func(r chi.Router) {
-			r.Use(middleware.AuthMiddleware(authService))
-			r.Get("/messages", messageHandler.GetInboxMessages)
-			r.Put("/messages/{id}/assign", messageHandler.AssignInboxMessageToThread)
-			r.Delete("/messages/{id}", messageHandler.ArchiveInboxMessage)
-		})
 
 		// Gmail OAuth routes (all protected)
 		r.Route("/gmail", func(r chi.Router) {

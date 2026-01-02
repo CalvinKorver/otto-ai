@@ -80,7 +80,7 @@ export default function SendEmailButton({ messageId, messageContent, replyableMe
 
   return (
     <div className="flex gap-2 mt-1">
-      <Button
+      {/* <Button
         onClick={handleCreateDraft}
         disabled={drafting || sending || drafted}
         variant="outline"
@@ -105,7 +105,7 @@ export default function SendEmailButton({ messageId, messageContent, replyableMe
         size="sm"
       >
         {sending ? 'Sending...' : 'Send Email'}
-      </Button>
+      </Button> */}
     </div>
   );
 }

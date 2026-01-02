@@ -29,23 +29,10 @@ func NewDashboardHandler(threadService *services.ThreadService, messageService *
 
 // DashboardResponse represents the consolidated dashboard data
 type DashboardResponse struct {
-	Threads       []ThreadResponse       `json:"threads"`
-	InboxMessages []InboxMessageResponse `json:"inboxMessages"`
-	Offers        []OfferResponse        `json:"offers"`
+	Threads []ThreadResponse `json:"threads"`
+	Offers  []OfferResponse  `json:"offers"`
 }
 
-// InboxMessageResponse includes additional fields for inbox messages
-type InboxMessageResponse struct {
-	ID                string `json:"id"`
-	Sender            string `json:"sender"`
-	SenderEmail       string `json:"senderEmail,omitempty"`
-	SenderPhone       string `json:"senderPhone,omitempty"`
-	Subject           string `json:"subject,omitempty"`
-	Content           string `json:"content"`
-	Timestamp         string `json:"timestamp"`
-	ExternalMessageID string `json:"externalMessageId,omitempty"`
-	MessageType       string `json:"messageType,omitempty"`
-}
 
 // GetDashboard retrieves all dashboard data (threads, inbox messages, and offers) in a single request
 func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
@@ -58,24 +45,17 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Use goroutines to fetch all data in parallel
-	var threads []models.Thread
-	var inboxMessages []models.Message
+	var threadsWithCounts []services.ThreadWithCounts
 	var offers []models.TrackedOffer
-	var threadsErr, messagesErr, offersErr error
+	var threadsErr, offersErr error
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(2)
 
 	// Fetch threads
 	go func() {
 		defer wg.Done()
-		threads, threadsErr = h.fetchThreads(userID)
-	}()
-
-	// Fetch inbox messages
-	go func() {
-		defer wg.Done()
-		inboxMessages, _, messagesErr = h.messageService.GetInboxMessages(userID, 50, 0)
+		threadsWithCounts, threadsErr = h.threadService.GetUserThreads(userID)
 	}()
 
 	// Fetch offers
@@ -94,13 +74,6 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if messagesErr != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: "failed to fetch inbox messages"})
-		return
-	}
-
 	if offersErr != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -110,46 +83,30 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 
 	// Build response
 	response := DashboardResponse{
-		Threads:       make([]ThreadResponse, len(threads)),
-		InboxMessages: make([]InboxMessageResponse, len(inboxMessages)),
-		Offers:        make([]OfferResponse, len(offers)),
+		Threads: make([]ThreadResponse, len(threadsWithCounts)),
+		Offers:  make([]OfferResponse, len(offers)),
 	}
 
 	// Convert threads
-	for i, thread := range threads {
+	for i, threadWithCounts := range threadsWithCounts {
 		threadResp := ThreadResponse{
-			ID:           thread.ID.String(),
-			SellerName:   thread.SellerName,
-			SellerType:   string(thread.SellerType),
-			Phone:        thread.Phone,
-			CreatedAt:    thread.CreatedAt.Format("2006-01-02T15:04:05Z"),
-			MessageCount: thread.MessageCount,
+			ID:                threadWithCounts.ID.String(),
+			SellerName:        threadWithCounts.SellerName,
+			SellerType:        string(threadWithCounts.SellerType),
+			Phone:             threadWithCounts.Phone,
+			CreatedAt:         threadWithCounts.CreatedAt.Format("2006-01-02T15:04:05Z"),
+			MessageCount:      threadWithCounts.MessageCount,
+			UnreadCount:       threadWithCounts.UnreadCount,
+			LastMessagePreview: threadWithCounts.LastMessagePreview,
+			DisplayName:       threadWithCounts.DisplayName,
 		}
 
-		if thread.LastMessageAt != nil {
-			lastMsg := thread.LastMessageAt.Format("2006-01-02T15:04:05Z")
+		if threadWithCounts.LastMessageAt != nil {
+			lastMsg := threadWithCounts.LastMessageAt.Format("2006-01-02T15:04:05Z")
 			threadResp.LastMessageAt = &lastMsg
 		}
 
 		response.Threads[i] = threadResp
-	}
-
-	// Convert inbox messages
-	for i, msg := range inboxMessages {
-		inboxResp := InboxMessageResponse{
-			ID:                msg.ID.String(),
-			Sender:            string(msg.Sender),
-			SenderEmail:       msg.SenderEmail,
-			SenderPhone:       msg.SenderPhone,
-			Subject:           msg.Subject,
-			Content:           msg.Content,
-			Timestamp:         msg.Timestamp.Format("2006-01-02T15:04:05Z"),
-			ExternalMessageID: msg.ExternalMessageID,
-		}
-		if msg.MessageType != nil {
-			inboxResp.MessageType = string(msg.MessageType.Type)
-		}
-		response.InboxMessages[i] = inboxResp
 	}
 
 	// Convert offers
@@ -181,10 +138,6 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(response)
 }
 
-// fetchThreads is a helper to fetch threads
-func (h *DashboardHandler) fetchThreads(userID uuid.UUID) ([]models.Thread, error) {
-	return h.threadService.GetUserThreads(userID)
-}
 
 // fetchOffers is a helper to fetch offers
 func (h *DashboardHandler) fetchOffers(userID uuid.UUID) ([]models.TrackedOffer, error) {

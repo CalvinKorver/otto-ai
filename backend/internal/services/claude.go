@@ -172,7 +172,7 @@ You are here to serve the user. `, year, make, model, sellerName, competitiveCon
 		"Here's your message:",
 		"Here is your message:",
 	}
-	
+
 	responseLower := strings.ToLower(responseText)
 	for _, prefix := range prefixes {
 		prefixLower := strings.ToLower(prefix)

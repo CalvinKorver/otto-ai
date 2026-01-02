@@ -85,7 +85,7 @@ func (h *DealerHandler) GetDealers(w http.ResponseWriter, r *http.Request) {
 			Phone:     dealer.Phone,
 			Website:   dealer.Website,
 			Distance:  dealer.Distance,
-			Contacted:  dealer.Contacted,
+			Contacted: dealer.Contacted,
 		}
 	}
 
@@ -149,4 +149,3 @@ func (h *DealerHandler) UpdateDealers(w http.ResponseWriter, r *http.Request) {
 		"message": "Dealers updated successfully",
 	})
 }
-

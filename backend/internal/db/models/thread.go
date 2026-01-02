@@ -23,7 +23,7 @@ type Thread struct {
 	CreatedAt      time.Time  `json:"createdAt"`
 	UpdatedAt      time.Time  `json:"updatedAt"`
 	LastMessageAt  *time.Time `json:"lastMessageAt,omitempty"`
-	MessageCount   int        `gorm:"default:0" json:"messageCount"`
+	LastReadAt     *time.Time `json:"lastReadAt,omitempty"`
 	DeletedAt      *time.Time `gorm:"index" json:"deletedAt,omitempty"`
 
 	User          *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`

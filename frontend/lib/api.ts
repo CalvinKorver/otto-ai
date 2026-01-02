@@ -50,6 +50,9 @@ export interface Thread {
   createdAt: string;
   lastMessageAt?: string;
   messageCount: number;
+  unreadCount: number;
+  lastMessagePreview?: string;
+  displayName: string;
 }
 
 export interface Message {
@@ -66,17 +69,6 @@ export interface Message {
   sentViaSMS?: boolean;
 }
 
-export interface InboxMessage {
-  id: string;
-  sender: 'user' | 'agent' | 'seller';
-  senderEmail?: string;
-  senderPhone?: string;
-  subject?: string;
-  content: string;
-  timestamp: string;
-  externalMessageId?: string;
-  messageType?: 'EMAIL' | 'PHONE';
-}
 
 export interface TrackedOffer {
   id: string;
@@ -124,7 +116,6 @@ export interface ErrorResponse {
 
 export interface DashboardResponse {
   threads: Thread[];
-  inboxMessages: InboxMessage[];
   offers: TrackedOffer[];
 }
 
@@ -220,6 +211,10 @@ export const threadAPI = {
   archive: async (threadId: string): Promise<void> => {
     await api.delete(`/threads/${threadId}`);
   },
+
+  markAsRead: async (threadId: string): Promise<void> => {
+    await api.put(`/threads/${threadId}/read`);
+  },
 };
 
 // Message API
@@ -242,20 +237,6 @@ export const messageAPI = {
     return response.data;
   },
 
-  getInboxMessages: async (limit = 50, offset = 0): Promise<{ messages: InboxMessage[]; total: number; hasMore: boolean }> => {
-    const response = await api.get<{ messages: InboxMessage[]; total: number; hasMore: boolean }>('/inbox/messages', {
-      params: { limit, offset },
-    });
-    return response.data;
-  },
-
-  assignInboxMessageToThread: async (messageId: string, threadId: string): Promise<void> => {
-    await api.put(`/inbox/messages/${messageId}/assign`, { threadId });
-  },
-
-  archiveInboxMessage: async (messageId: string): Promise<void> => {
-    await api.delete(`/inbox/messages/${messageId}`);
-  },
 };
 
 // Offer API

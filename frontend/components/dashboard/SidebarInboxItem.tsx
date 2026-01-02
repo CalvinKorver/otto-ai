@@ -1,6 +1,19 @@
 'use client';
 
-import { InboxMessage } from '@/lib/api';
+// This component is deprecated - inbox messages are now consolidated into threads
+// Keeping for reference but not actively used
+
+interface InboxMessage {
+  id: string;
+  sender: 'user' | 'agent' | 'seller';
+  senderEmail?: string;
+  senderPhone?: string;
+  subject?: string;
+  content: string;
+  timestamp: string;
+  externalMessageId?: string;
+  messageType?: 'EMAIL' | 'PHONE';
+}
 
 interface SidebarInboxItemProps {
   message: InboxMessage;
@@ -13,6 +26,17 @@ export function SidebarInboxItem({
   isActive,
   onSelect,
 }: SidebarInboxItemProps) {
+  const isSMS = message.messageType === 'PHONE';
+  
+  // For SMS, show content snippet; for email, show subject
+  const displayText = isSMS 
+    ? (message.content || 'No message')
+    : (message.subject || 'No Subject');
+  
+  // For SMS, show phone number; for email, show email
+  const senderInfo = isSMS
+    ? (message.senderPhone || 'Unknown number')
+    : (message.senderEmail || 'Unknown sender');
 
   return (
     <div
@@ -22,10 +46,10 @@ export function SidebarInboxItem({
       onClick={() => onSelect(message)}
     >
       <div className="font-medium text-sm truncate leading-tight">
-        {message.subject || 'No Subject'}
+        {displayText}
       </div>
       <div className="text-xs text-muted-foreground truncate leading-tight">
-        {message.senderEmail}
+        {senderInfo}
       </div>
     </div>
   );

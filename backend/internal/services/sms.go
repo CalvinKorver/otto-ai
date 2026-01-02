@@ -23,7 +23,7 @@ func NewSMSService(db *gorm.DB, twilioClient *twilio.Client) *SMSService {
 	}
 }
 
-// ProcessInboundSMS creates an inbox message from an incoming SMS
+// ProcessInboundSMS creates a message from an incoming SMS and auto-assigns it to a thread
 func (s *SMSService) ProcessInboundSMS(userID uuid.UUID, from, body, messageSID string) (*models.Message, error) {
 	// Get phone message type
 	var phoneType models.MessageType
@@ -40,21 +40,60 @@ func (s *SMSService) ProcessInboundSMS(userID uuid.UUID, from, body, messageSID 
 		}
 	}
 
-	// Create inbox message (thread_id = nil)
+	// Check if thread exists for this phone number
+	var thread models.Thread
+	err := s.db.Where("phone = ? AND user_id = ? AND deleted_at IS NULL", from, userID).First(&thread).Error
+	
+	var threadID *uuid.UUID
+	if err == nil {
+		// Thread exists, use it
+		threadID = &thread.ID
+	} else if err == gorm.ErrRecordNotFound {
+		// Thread doesn't exist, create new one with phone number as name
+		newThread := &models.Thread{
+			UserID:     userID,
+			SellerName: from, // Use phone number as name for unassigned threads
+			SellerType: models.SellerTypeOther,
+			Phone:      from,
+			LastReadAt: nil, // New thread, all messages unread
+		}
+		if err := s.db.Create(newThread).Error; err != nil {
+			return nil, fmt.Errorf("failed to create thread: %w", err)
+		}
+		threadID = &newThread.ID
+	} else {
+		return nil, fmt.Errorf("failed to check for existing thread: %w", err)
+	}
+
+	// Create message assigned to thread
+	now := time.Now()
 	message := &models.Message{
 		UserID:            userID,
-		ThreadID:          nil, // Unassigned - goes to inbox
+		ThreadID:          threadID,
 		MessageTypeID:     &phoneType.ID,
 		Sender:            models.SenderTypeSeller,
 		Content:           body,
-		Timestamp:      time.Now(),
+		Timestamp:         now,
 		SenderPhone:       from,
 		ExternalMessageID: messageSID,
 	}
 
-	// Save message to database
-	if err := s.db.Create(message).Error; err != nil {
-		return nil, fmt.Errorf("failed to create inbox message: %w", err)
+	// Save message and update thread's last_message_at in a transaction
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(message).Error; err != nil {
+			return fmt.Errorf("failed to create message: %w", err)
+		}
+
+		// Update thread's last_message_at
+		if err := tx.Model(&models.Thread{}).Where("id = ?", *threadID).Update("last_message_at", now).Error; err != nil {
+			return fmt.Errorf("failed to update thread last_message_at: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return message, nil
@@ -119,12 +158,9 @@ func (s *SMSService) SendSMS(userID uuid.UUID, threadID uuid.UUID, content strin
 		return fmt.Errorf("failed to save outbound message: %w", err)
 	}
 
-	// Update thread message count and last message time
+	// Update thread last message time
 	now := time.Now()
-	if err := s.db.Model(&models.Thread{}).Where("id = ?", threadID).Updates(map[string]interface{}{
-		"message_count":   gorm.Expr("message_count + ?", 1),
-		"last_message_at": now,
-	}).Error; err != nil {
+	if err := s.db.Model(&models.Thread{}).Where("id = ?", threadID).Update("last_message_at", now).Error; err != nil {
 		return fmt.Errorf("failed to update thread: %w", err)
 	}
 

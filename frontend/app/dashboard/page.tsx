@@ -1,28 +1,26 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import ChatPane from '@/components/dashboard/ChatPane';
 import TopNavBar from '@/components/dashboard/TopNavBar';
 import OffersPane from '@/components/dashboard/OffersPane';
-import { Thread, InboxMessage, TrackedOffer, Dealer, dashboardAPI, dealersAPI } from '@/lib/api';
+import { Thread, TrackedOffer, Dealer, dashboardAPI, dealersAPI } from '@/lib/api';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { toast } from 'sonner';
 
-type ViewMode = 'chat' | 'inbox' | 'offers';
+type ViewMode = 'chat' | 'offers';
 
 function DashboardContent() {
   const { user, loading, refreshUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [inboxMessages, setInboxMessages] = useState<InboxMessage[]>([]);
   const [offers, setOffers] = useState<TrackedOffer[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-  const [selectedInboxMessage, setSelectedInboxMessage] = useState<InboxMessage | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
@@ -56,6 +54,93 @@ function DashboardContent() {
     }
   }, [user]);
 
+  // Polling for new threads
+  const threadsRef = useRef<Thread[]>([]);
+  const offersRef = useRef<TrackedOffer[]>([]);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    threadsRef.current = threads;
+  }, [threads]);
+
+  useEffect(() => {
+    offersRef.current = offers;
+  }, [offers]);
+
+  useEffect(() => {
+    if (!user || !user.preferences) return;
+
+    const POLL_INTERVAL = 20000; // 20 seconds
+    let pollInterval: NodeJS.Timeout | null = null;
+    let isPolling = true;
+
+    const pollForThreads = async () => {
+      // Only poll if tab is visible
+      if (document.visibilityState === 'hidden') {
+        return;
+      }
+
+      try {
+        const dashboardData = await dashboardAPI.getDashboard();
+        
+        // Update threads if they changed
+        setThreads(prev => {
+          const prevIds = new Set(prev.map(t => t.id));
+          const hasChanges = dashboardData.threads.some(t => !prevIds.has(t.id)) ||
+            dashboardData.threads.length !== prev.length ||
+            dashboardData.threads.some(t => {
+              const prevThread = prev.find(p => p.id === t.id);
+              return prevThread && (prevThread.unreadCount !== t.unreadCount || prevThread.lastMessageAt !== t.lastMessageAt);
+            });
+          return hasChanges ? dashboardData.threads : prev;
+        });
+
+        setOffers(prev => {
+          const prevIds = new Set(prev.map(o => o.id));
+          const hasChanges = dashboardData.offers.some(o => !prevIds.has(o.id)) ||
+            dashboardData.offers.length !== prev.length;
+          return hasChanges ? dashboardData.offers : prev;
+        });
+      } catch (error) {
+        console.error('Failed to poll for new threads:', error);
+      }
+    };
+
+    const startPolling = () => {
+      if (isPolling && document.visibilityState === 'visible') {
+        pollInterval = setInterval(pollForThreads, POLL_INTERVAL);
+      }
+    };
+
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    // Handle visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Poll immediately when tab becomes visible, then start interval
+        pollForThreads();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    // Start polling
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isPolling = false;
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
 
   const loadDashboard = async () => {
     setLoadingDashboard(true);
@@ -65,7 +150,6 @@ function DashboardContent() {
         dealersAPI.getDealers().catch(() => []), // Don't fail if dealers endpoint fails
       ]);
       setThreads(dashboardData.threads);
-      setInboxMessages(dashboardData.inboxMessages);
       setOffers(dashboardData.offers);
       setDealers(dealersData);
     } catch (error) {
@@ -75,27 +159,6 @@ function DashboardContent() {
     }
   };
 
-  const handleInboxMessageAssigned = () => {
-    // Immediately remove the selected message from the inbox list if it exists
-    if (selectedInboxMessage) {
-      setInboxMessages(prev => prev.filter(msg => msg.id !== selectedInboxMessage.id));
-    }
-    setSelectedInboxMessage(null);
-    setSelectedThreadId(null);
-  };
-
-  const handleInboxMessageArchived = (messageId: string) => {
-    // Immediately remove the archived message from the inbox list
-    setInboxMessages(prev => prev.filter(msg => msg.id !== messageId));
-    
-    // Clear selection if this was the selected message
-    setSelectedInboxMessage(prev => 
-      prev?.id === messageId ? null : prev
-    );
-    
-    // Refresh dashboard to ensure consistency with server
-    loadDashboard();
-  };
 
   const handleThreadArchived = (threadId: string) => {
     // Immediately remove the archived thread from the threads list
@@ -113,51 +176,41 @@ function DashboardContent() {
   const handleThreadCreated = (newThread: Thread) => {
     setThreads([...threads, newThread]);
     setSelectedThreadId(newThread.id);
-    setSelectedInboxMessage(null);
     setSelectedOfferId(null);
   };
 
   const handleThreadSelect = (threadId: string) => {
     setSelectedThreadId(threadId);
-    setSelectedInboxMessage(null);
     setSelectedOfferId(null);
     setViewMode('chat');
-  };
-
-  const handleInboxMessageSelect = (message: InboxMessage) => {
-    setSelectedInboxMessage(message);
-    setSelectedThreadId(null);
-    setSelectedOfferId(null);
-    setViewMode('inbox');
   };
 
   const handleOfferSelect = (offer: TrackedOffer) => {
     setSelectedOfferId(offer.id);
     setSelectedThreadId(offer.threadId);
-    setSelectedInboxMessage(null);
     setViewMode('chat');
   };
 
   const handleViewOffers = () => {
     setViewMode('offers');
     setSelectedThreadId(null);
-    setSelectedInboxMessage(null);
     setSelectedOfferId(null);
   };
 
   const handleNavigateToThread = (threadId: string) => {
     setSelectedThreadId(threadId);
-    setSelectedInboxMessage(null);
     setSelectedOfferId(null);
     setViewMode('chat');
   };
 
   const handleGoToDashboard = () => {
     setSelectedThreadId(null);
-    setSelectedInboxMessage(null);
     setSelectedOfferId(null);
     setViewMode('chat');
   };
+
+  // Calculate total unread count across all threads
+  const totalUnreadCount = threads.reduce((sum, thread) => sum + (thread.unreadCount || 0), 0);
 
   if (loading || loadingDashboard) {
     return (
@@ -184,14 +237,12 @@ function DashboardContent() {
       <AppSidebar
         variant="inset"
         threads={threads}
-        inboxMessages={inboxMessages}
         selectedThreadId={selectedThreadId}
-        selectedInboxMessageId={selectedInboxMessage?.id || null}
         offers={offers}
         selectedOfferId={selectedOfferId}
+        totalUnreadCount={totalUnreadCount}
         onThreadSelect={handleThreadSelect}
         onThreadCreated={handleThreadCreated}
-        onInboxMessageSelect={handleInboxMessageSelect}
         onOfferSelect={handleOfferSelect}
         onGoToDashboard={handleGoToDashboard}
       />
@@ -203,12 +254,9 @@ function DashboardContent() {
           ) : (
             <ChatPane
               selectedThreadId={selectedThreadId}
-              selectedInboxMessage={selectedInboxMessage}
               threads={threads}
               offers={offers}
               dealers={dealers}
-              onInboxMessageAssigned={handleInboxMessageAssigned}
-              onInboxMessageArchived={handleInboxMessageArchived}
               onThreadArchived={handleThreadArchived}
               onNavigateToThread={handleNavigateToThread}
               onOfferDeleted={loadDashboard}

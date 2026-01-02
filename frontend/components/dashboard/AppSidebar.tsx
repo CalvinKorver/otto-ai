@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { IconMail, IconMessageCircle, IconPlus, IconCopy, IconCheck, IconCurrencyDollar, IconHelpCircle } from '@tabler/icons-react';
-import { Thread, InboxMessage, TrackedOffer, threadAPI } from '@/lib/api';
+import { Thread, TrackedOffer, threadAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { SidebarInboxItem } from './SidebarInboxItem';
 import { SidebarOfferItem } from './SidebarOfferItem';
 import { NavUser } from './NavUser';
 import {
@@ -40,28 +39,24 @@ import * as React from 'react';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   threads: Thread[];
-  inboxMessages: InboxMessage[];
   selectedThreadId: string | null;
-  selectedInboxMessageId: string | null;
   offers: TrackedOffer[];
   selectedOfferId: string | null;
+  totalUnreadCount?: number;
   onThreadSelect: (threadId: string) => void;
   onThreadCreated: (thread: Thread) => void;
-  onInboxMessageSelect: (message: InboxMessage) => void;
   onOfferSelect: (offer: TrackedOffer) => void;
   onGoToDashboard?: () => void;
 }
 
 export function AppSidebar({
   threads,
-  inboxMessages,
   selectedThreadId,
-  selectedInboxMessageId,
   offers,
   selectedOfferId,
+  totalUnreadCount = 0,
   onThreadSelect,
   onThreadCreated,
-  onInboxMessageSelect,
   onOfferSelect,
   onGoToDashboard,
   ...props
@@ -132,12 +127,17 @@ export function AppSidebar({
         </SidebarHeader>
         <SidebarContent>
 
-          {/* Inbox Section */}
+          {/* Messages Section */}
           <SidebarGroup>
             <SidebarGroupLabel className="flex items-center justify-between text-semibold">
               <span className="flex items-center gap-2 ">
                 <IconMail className="h-4 w-4" />
-                Inbox
+                Messages
+                {totalUnreadCount > 0 && (
+                  <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-medium text-primary-foreground bg-primary rounded-full">
+                    {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                  </span>
+                )}
               </span>
               {user?.inboxEmail && (
                 <IconHelpCircle
@@ -148,18 +148,35 @@ export function AppSidebar({
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="flex flex-col gap-1 px-2">
-                {inboxMessages.length === 0 ? (
+                {threads.length === 0 ? (
                   <div className="px-2 py-1 text-sm text-muted-foreground italic">
-                    No new messages
+                    No messages
                   </div>
                 ) : (
-                  inboxMessages.map((message) => (
-                    <SidebarInboxItem
-                      key={message.id}
-                      message={message}
-                      isActive={selectedInboxMessageId === message.id}
-                      onSelect={onInboxMessageSelect}
-                    />
+                  threads.map((thread) => (
+                    <div
+                      key={thread.id}
+                      onClick={() => onThreadSelect(thread.id)}
+                      className={`cursor-pointer rounded-md p-1.5 hover:bg-accent transition-colors ${
+                        selectedThreadId === thread.id ? 'bg-accent' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {thread.unreadCount > 0 && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate leading-tight">
+                            {thread.displayName || thread.sellerName || thread.phone || 'Unknown'}
+                          </div>
+                          {thread.lastMessagePreview && (
+                            <div className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
+                              {thread.lastMessagePreview}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
@@ -189,35 +206,6 @@ export function AppSidebar({
                   ))
                 )}
               </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          {/* Threads Section */}
-          <SidebarGroup>
-            <SidebarGroupLabel className="flex items-center gap-2 text-semibold">
-              <IconMessageCircle className="h-4 w-4" />
-              Threads
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {threads.length === 0 ? (
-                  <div className="px-4 py-1 text-sm text-muted-foreground italic">
-                    No active negotiations
-                  </div>
-                ) : (
-                  threads.map((thread) => (
-                    <SidebarMenuItem key={thread.id}>
-                      <SidebarMenuButton
-                        onClick={() => onThreadSelect(thread.id)}
-                        isActive={selectedThreadId === thread.id}
-                        className="flex flex-col items-start h-auto py-1"
-                      >
-                        <div className="font-medium">{thread.sellerName}</div>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))
-                )}
-              </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>

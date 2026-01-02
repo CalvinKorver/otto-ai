@@ -1,7 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Thread, threadAPI, InboxMessage, messageAPI } from '@/lib/api';
+import { Thread, threadAPI, messageAPI } from '@/lib/api';
+
+// This component is deprecated - inbox messages are now consolidated into threads
+// Keeping for reference but not actively used
+
+interface InboxMessage {
+  id: string;
+  sender: 'user' | 'agent' | 'seller';
+  senderEmail?: string;
+  senderPhone?: string;
+  subject?: string;
+  content: string;
+  timestamp: string;
+  externalMessageId?: string;
+  messageType?: 'EMAIL' | 'PHONE';
+}
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ThreadPaneProps {
@@ -49,8 +64,9 @@ export default function ThreadPane({
   const loadInboxMessages = async () => {
     setLoadingInbox(true);
     try {
-      const response = await messageAPI.getInboxMessages();
-      setInboxMessages(response.messages);
+      // Inbox messages are now consolidated into threads
+      // This function is deprecated
+      setInboxMessages([]);
     } catch (error) {
       console.error('Failed to load inbox messages:', error);
     } finally {

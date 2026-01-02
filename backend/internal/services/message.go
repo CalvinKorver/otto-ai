@@ -181,12 +181,9 @@ func (s *MessageService) CreateUserMessage(threadID, userID uuid.UUID, content s
 			return fmt.Errorf("failed to create agent message: %w", err)
 		}
 
-		// Update thread message count and last message time
+		// Update thread last message time
 		now := time.Now()
-		if err := tx.Model(&models.Thread{}).Where("id = ?", threadID).Updates(map[string]interface{}{
-			"message_count":   gorm.Expr("message_count + ?", 2),
-			"last_message_at": now,
-		}).Error; err != nil {
+		if err := tx.Model(&models.Thread{}).Where("id = ?", threadID).Update("last_message_at", now).Error; err != nil {
 			return fmt.Errorf("failed to update thread: %w", err)
 		}
 
@@ -231,12 +228,9 @@ func (s *MessageService) CreateSellerMessage(threadID, userID uuid.UUID, content
 			return fmt.Errorf("failed to create seller message: %w", err)
 		}
 
-		// Update thread message count and last message time
+		// Update thread last message time
 		now := time.Now()
-		if err := tx.Model(&models.Thread{}).Where("id = ?", threadID).Updates(map[string]interface{}{
-			"message_count":   gorm.Expr("message_count + ?", 1),
-			"last_message_at": now,
-		}).Error; err != nil {
+		if err := tx.Model(&models.Thread{}).Where("id = ?", threadID).Update("last_message_at", now).Error; err != nil {
 			return fmt.Errorf("failed to update thread: %w", err)
 		}
 

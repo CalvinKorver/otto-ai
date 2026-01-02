@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { InboxMessage, Thread, messageAPI, Message, threadAPI, TrackedOffer, Dealer } from '@/lib/api';
+import { Thread, messageAPI, Message, threadAPI, TrackedOffer, Dealer } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -34,36 +34,31 @@ interface DisplayMessage extends Message {
 
 interface ChatPaneProps {
   selectedThreadId: string | null;
-  selectedInboxMessage?: InboxMessage | null;
   threads?: Thread[];
   offers?: TrackedOffer[];
   dealers?: Dealer[];
-  onInboxMessageAssigned?: () => void;
-  onInboxMessageArchived?: (messageId: string) => void;
   onThreadArchived?: (threadId: string) => void;
   onNavigateToThread?: (threadId: string) => void;
   onOfferDeleted?: () => void;
   onDealersUpdated?: () => void;
 }
 
-export default function ChatPane({ selectedThreadId, selectedInboxMessage, threads = [], offers = [], dealers = [], onInboxMessageAssigned, onInboxMessageArchived, onThreadArchived, onNavigateToThread, onOfferDeleted, onDealersUpdated }: ChatPaneProps) {
+export default function ChatPane({ selectedThreadId, threads = [], offers = [], dealers = [], onThreadArchived, onNavigateToThread, onOfferDeleted, onDealersUpdated }: ChatPaneProps) {
   const { user } = useAuth();
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
-  const [assigningToThread, setAssigningToThread] = useState(false);
-  const [archiving, setArchiving] = useState(false);
+  const [showArchiveThreadDialog, setShowArchiveThreadDialog] = useState(false);
+  const [archivingThread, setArchivingThread] = useState(false);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showTypingIndicator, setShowTypingIndicator] = useState(false);
-  const [showArchiveThreadDialog, setShowArchiveThreadDialog] = useState(false);
-  const [archivingThread, setArchivingThread] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedThreadId) {
       loadThreadMessages(selectedThreadId);
+      // Mark thread as read when viewed
+      markThreadAsRead(selectedThreadId);
     }
   }, [selectedThreadId]);
 
@@ -79,55 +74,15 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
     }
   };
 
-  const handleAssignToThread = async (threadId: string) => {
-    if (!selectedInboxMessage) return;
-
-    setAssigningToThread(true);
+  const markThreadAsRead = async (threadId: string) => {
     try {
-      await messageAPI.assignInboxMessageToThread(selectedInboxMessage.id, threadId);
-      setShowAssignModal(false);
-
-      // Notify parent to update inbox messages state
-      if (onInboxMessageArchived) {
-        onInboxMessageArchived(selectedInboxMessage.id);
-      }
-
-      if (onInboxMessageAssigned) {
-        onInboxMessageAssigned();
-      }
+      await threadAPI.markAsRead(threadId);
     } catch (error) {
-      console.error('Failed to assign message to thread:', error);
-      alert('Failed to assign message to thread');
-    } finally {
-      setAssigningToThread(false);
+      console.error('Failed to mark thread as read:', error);
+      // Don't show error to user, just log it
     }
   };
 
-  const handleArchiveConfirm = async () => {
-    if (!selectedInboxMessage) return;
-
-    setArchiving(true);
-    try {
-      await messageAPI.archiveInboxMessage(selectedInboxMessage.id);
-
-      // Close dialog
-      setShowArchiveDialog(false);
-
-      // Notify parent to update inbox messages state
-      if (onInboxMessageArchived) {
-        onInboxMessageArchived(selectedInboxMessage.id);
-      }
-
-      if (onInboxMessageAssigned) {
-        onInboxMessageAssigned();
-      }
-    } catch (error) {
-      console.error('Failed to archive message:', error);
-      alert('Failed to archive message');
-    } finally {
-      setArchiving(false);
-    }
-  };
 
   const handleArchiveThread = async () => {
     if (!selectedThreadId) return;
@@ -314,118 +269,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, showTypingIndicator]);
 
-  // Show inbox message if selected
-  if (selectedInboxMessage) {
-    return (
-      <>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16">
-          <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mx-2 data-[orientation=vertical]:h-4"
-            />
-            <h1 className="text-base font-medium">
-              {selectedInboxMessage.subject || 'No Subject'}
-            </h1>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 flex flex-col bg-background overflow-hidden">
-            {/* Email Header */}
-            <div className="border-b border-border px-6 py-4 bg-card shrink-0">
-              <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                {selectedInboxMessage.subject || 'No Subject'}
-              </h2>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-medium">From:</span>
-                <span>{selectedInboxMessage.senderEmail}</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {new Date(selectedInboxMessage.timestamp).toLocaleString()}
-              </div>
-            </div>
-
-            {/* Email Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/50" style={{ overflowY: 'auto' }}>
-              <div className="bg-card rounded-lg border border-border p-6">
-                <div className="whitespace-pre-wrap text-card-foreground break-words">
-                  {selectedInboxMessage.content}
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="border-t border-border px-6 py-4 bg-card">
-              <div className="flex gap-3">
-                <Button onClick={() => setShowAssignModal(true)} disabled={archiving}>
-                  Assign to Thread
-                </Button>
-                <Button
-                  onClick={() => setShowArchiveDialog(true)}
-                  disabled={archiving}
-                  variant="secondary"
-                >
-                  Archive
-                </Button>
-              </div>
-            </div>
-
-            {/* Assign to Thread Modal */}
-            {showAssignModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => !assigningToThread && setShowAssignModal(false)}>
-                <div className="bg-popover rounded-lg p-6 max-w-md w-full mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
-                  <h2 className="text-xl font-bold text-popover-foreground mb-4">Assign to Thread</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Choose which seller thread to assign this email to:
-                  </p>
-
-                  {threads.length === 0 ? (
-                    <div className="text-muted-foreground text-sm italic py-4">
-                      No threads available. Create a new seller thread first.
-                    </div>
-                  ) : (
-                    <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
-                      {threads.map((thread) => (
-                        <button
-                          key={thread.id}
-                          onClick={() => handleAssignToThread(thread.id)}
-                          disabled={assigningToThread}
-                          className="w-full text-left px-4 py-3 rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 cursor-pointer"
-                        >
-                          <div className="font-medium">{thread.sellerName}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5 capitalize">{thread.sellerType}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={() => setShowAssignModal(false)}
-                    disabled={assigningToThread}
-                    variant="secondary"
-                    className="w-full"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Archive Confirmation Dialog */}
-            <ArchiveConfirmDialog
-              open={showArchiveDialog}
-              onOpenChange={setShowArchiveDialog}
-              onConfirm={handleArchiveConfirm}
-              archiving={archiving}
-            />
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (!selectedThreadId && !selectedInboxMessage) {
+  if (!selectedThreadId) {
     return (
       <DashboardPane
         offers={offers}
@@ -452,7 +296,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
           <div className="flex flex-1 items-center justify-between">
             <div>
               <h1 className="text-base font-medium">
-                {selectedThread?.sellerName || 'Thread'}
+                {selectedThread?.displayName || selectedThread?.sellerName || selectedThread?.phone || 'Thread'}
               </h1>
               {selectedThread && (
                 <div className="text-xs text-muted-foreground capitalize">
@@ -561,7 +405,7 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
                         {/* Sender label */}
                         <div className={`text-xs text-muted-foreground mb-1 ${isUser ? 'text-right' : 'text-left'}`}>
                           {isUser && 'You'}
-                          {isSeller && selectedThread?.sellerName}
+                          {isSeller && (selectedThread?.displayName || selectedThread?.sellerName || selectedThread?.phone || 'Seller')}
                         </div>
 
                         {/* Message bubble */}
