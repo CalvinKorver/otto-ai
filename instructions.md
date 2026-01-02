@@ -29,6 +29,13 @@
 - Next.js app router in `frontend/app/`; main screens under `app/dashboard`, auth under `login`/`register`, onboarding under `onboarding`.
 - Shared UI in `frontend/components/` (shadcn-based), API client `frontend/lib/api.ts`, auth context `frontend/contexts/AuthContext.tsx`.
 
+### React Patterns & Best Practices
+- **State Management**: Follow React's unidirectional data flow. Lift state up to the nearest common ancestor. Pass data down via props, pass callbacks up via props.
+- **Component Communication**: Use callback props for parent-child communication. Avoid global window events (`window.dispatchEvent`, `window.addEventListener`) for component state updates. Use callbacks like `onInboxMessageArchived(messageId: string)` instead of `window.dispatchEvent(new Event('refreshInboxMessages'))`.
+- **State Updates**: When updating state after async operations (API calls), update local state immediately for instant UI feedback, then optionally refresh from server for consistency. Example: `setInboxMessages(prev => prev.filter(msg => msg.id !== messageId))` followed by `loadDashboard()`.
+- **Callback Naming**: Use descriptive callback names that indicate the action: `onInboxMessageArchived`, `onThreadArchived`, `onInboxMessageAssigned`. Callbacks should receive relevant data (IDs, objects) as parameters when needed.
+- **Type Safety**: Define callback types in component interfaces. Example: `onInboxMessageArchived?: (messageId: string) => void;`
+
 ### Testing
 - Gmail OAuth manual flow in `backend/TESTING.md`.
 - Quick login for tests: `curl -X POST http://localhost:8080/api/v1/auth/login -d '{"email":"test@example.com","password":"testpass123"}'` (from testing doc).

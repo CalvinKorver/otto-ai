@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"carbuyer/internal/api/middleware"
 	"carbuyer/internal/services"
@@ -146,15 +149,72 @@ func (h *PreferencesHandler) CreatePreferences(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// #region agent log
+	func() {
+		logData := fmt.Sprintf(`{"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"preferences.go:149","message":"Preferences created, checking smsService","data":{"userID":"%s","smsServiceIsNil":%t},"timestamp":%d}`, userID.String(), h.smsService == nil, time.Now().UnixMilli())
+		if f, err := os.OpenFile("/Users/calvinkorver/car-buyer/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintln(f, logData)
+			f.Close()
+		}
+	}()
+	// #endregion
+
 	// Allocate Twilio phone number for user (async - don't block on errors)
 	if h.smsService != nil {
+		// #region agent log
+		func() {
+			logData := fmt.Sprintf(`{"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"preferences.go:152","message":"Starting phone allocation goroutine","data":{"userID":"%s"},"timestamp":%d}`, userID.String(), time.Now().UnixMilli())
+			if f, err := os.OpenFile("/Users/calvinkorver/car-buyer/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintln(f, logData)
+				f.Close()
+			}
+		}()
+		// #endregion
 		go func() {
+			// #region agent log
+			func() {
+				logData := fmt.Sprintf(`{"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"preferences.go:155","message":"Goroutine executing, calling AllocatePhoneNumber","data":{"userID":"%s"},"timestamp":%d}`, userID.String(), time.Now().UnixMilli())
+				if f, err := os.OpenFile("/Users/calvinkorver/car-buyer/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+					fmt.Fprintln(f, logData)
+					f.Close()
+				}
+			}()
+			// #endregion
 			if err := h.smsService.AllocatePhoneNumber(userID); err != nil {
+				// #region agent log
+				func() {
+					logData := fmt.Sprintf(`{"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"preferences.go:158","message":"AllocatePhoneNumber failed","data":{"userID":"%s","error":"%s"},"timestamp":%d}`, userID.String(), err.Error(), time.Now().UnixMilli())
+					if f, err := os.OpenFile("/Users/calvinkorver/car-buyer/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+						fmt.Fprintln(f, logData)
+						f.Close()
+					}
+				}()
+				// #endregion
 				// Log error but don't fail the request
 				// Phone number allocation can be retried later
 				// In production, you might want to use a job queue for this
+			} else {
+				// #region agent log
+				func() {
+					logData := fmt.Sprintf(`{"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"preferences.go:165","message":"AllocatePhoneNumber succeeded","data":{"userID":"%s"},"timestamp":%d}`, userID.String(), time.Now().UnixMilli())
+					if f, err := os.OpenFile("/Users/calvinkorver/car-buyer/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+						fmt.Fprintln(f, logData)
+						f.Close()
+					}
+				}()
+				// #endregion
 			}
 		}()
+	} else {
+		// #region agent log
+		func() {
+			logData := fmt.Sprintf(`{"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"preferences.go:172","message":"smsService is nil, skipping phone allocation","data":{"userID":"%s"},"timestamp":%d}`, userID.String(), time.Now().UnixMilli())
+			if f, err := os.OpenFile("/Users/calvinkorver/car-buyer/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintln(f, logData)
+				f.Close()
+			}
+		}()
+		// #endregion
 	}
 
 	// Return response with make/model/trim names from relationships

@@ -113,19 +113,19 @@ func (s *PreferencesService) CreateUserPreferences(userID uuid.UUID, year int, m
 		return nil, fmt.Errorf("failed to load relationships: %w", err)
 	}
 
-	// Trigger async dealer fetch if zip code is provided
-	if zipCode != "" && s.dealerService != nil {
-		go func() {
-			dealers, err := s.dealerService.FetchDealersForZipCode(zipCode, makeName, modelName, year)
-			if err != nil {
-				log.Printf("Failed to fetch dealers for zip code %s: %v", zipCode, err)
-				return
-			}
-			if err := s.dealerService.SaveDealersForPreferences(prefs.ID, dealers); err != nil {
-				log.Printf("Failed to save dealers for preferences: %v", err)
-			}
-		}()
-	}
+	// // Trigger async dealer fetch if zip code is provided
+	// if zipCode != "" && s.dealerService != nil {
+	// 	go func() {
+	// 		dealers, err := s.dealerService.FetchDealersForZipCode(zipCode, makeName, modelName, year)
+	// 		if err != nil {
+	// 			log.Printf("Failed to fetch dealers for zip code %s: %v", zipCode, err)
+	// 			return
+	// 		}
+	// 		if err := s.dealerService.SaveDealersForPreferences(prefs.ID, dealers); err != nil {
+	// 			log.Printf("Failed to save dealers for preferences: %v", err)
+	// 		}
+	// 	}()
+	// }
 
 	return prefs, nil
 }
@@ -218,16 +218,16 @@ func (s *PreferencesService) UpdateUserPreferences(userID uuid.UUID, year int, m
 			}
 
 			// Fetch new dealers
-			go func() {
-				dealers, err := s.dealerService.FetchDealersForZipCode(user.ZipCode, makeName, modelName, year)
-				if err != nil {
-					log.Printf("Failed to fetch dealers for zip code %s: %v", user.ZipCode, err)
-					return
-				}
-				if err := s.dealerService.SaveDealersForPreferences(prefs.ID, dealers); err != nil {
-					log.Printf("Failed to save dealers for preferences: %v", err)
-				}
-			}()
+			// go func() {
+			// 	dealers, err := s.dealerService.FetchDealersForZipCode(user.ZipCode, makeName, modelName, year)
+			// 	if err != nil {
+			// 		log.Printf("Failed to fetch dealers for zip code %s: %v", user.ZipCode, err)
+			// 		return
+			// 	}
+			// 	if err := s.dealerService.SaveDealersForPreferences(prefs.ID, dealers); err != nil {
+			// 		log.Printf("Failed to save dealers for preferences: %v", err)
+			// 	}
+			// }()
 		}
 	}
 

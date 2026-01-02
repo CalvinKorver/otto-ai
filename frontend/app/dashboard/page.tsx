@@ -56,14 +56,6 @@ function DashboardContent() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const handleRefresh = () => {
-      loadDashboard();
-      setSelectedThreadId(null);
-    };
-    window.addEventListener('refreshThreads', handleRefresh);
-    return () => window.removeEventListener('refreshThreads', handleRefresh);
-  }, []);
 
   const loadDashboard = async () => {
     setLoadingDashboard(true);
@@ -84,8 +76,38 @@ function DashboardContent() {
   };
 
   const handleInboxMessageAssigned = () => {
+    // Immediately remove the selected message from the inbox list if it exists
+    if (selectedInboxMessage) {
+      setInboxMessages(prev => prev.filter(msg => msg.id !== selectedInboxMessage.id));
+    }
     setSelectedInboxMessage(null);
     setSelectedThreadId(null);
+  };
+
+  const handleInboxMessageArchived = (messageId: string) => {
+    // Immediately remove the archived message from the inbox list
+    setInboxMessages(prev => prev.filter(msg => msg.id !== messageId));
+    
+    // Clear selection if this was the selected message
+    setSelectedInboxMessage(prev => 
+      prev?.id === messageId ? null : prev
+    );
+    
+    // Refresh dashboard to ensure consistency with server
+    loadDashboard();
+  };
+
+  const handleThreadArchived = (threadId: string) => {
+    // Immediately remove the archived thread from the threads list
+    setThreads(prev => prev.filter(thread => thread.id !== threadId));
+    
+    // Clear selection if this was the selected thread
+    if (selectedThreadId === threadId) {
+      setSelectedThreadId(null);
+    }
+    
+    // Refresh dashboard to ensure consistency with server
+    loadDashboard();
   };
 
   const handleThreadCreated = (newThread: Thread) => {
@@ -186,6 +208,8 @@ function DashboardContent() {
               offers={offers}
               dealers={dealers}
               onInboxMessageAssigned={handleInboxMessageAssigned}
+              onInboxMessageArchived={handleInboxMessageArchived}
+              onThreadArchived={handleThreadArchived}
               onNavigateToThread={handleNavigateToThread}
               onOfferDeleted={loadDashboard}
               onDealersUpdated={loadDashboard}

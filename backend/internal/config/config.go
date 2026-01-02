@@ -66,6 +66,17 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("ANTHROPIC_API_KEY environment variable is required")
 	}
 
+	// Validate Twilio Messaging Service SID if Twilio is configured
+	if twilioAccountSID != "" || twilioAuthToken != "" {
+		if twilioMessagingServiceSID == "" {
+			return nil, fmt.Errorf("TWILIO_MESSAGING_SERVICE_SID environment variable is required when Twilio is configured")
+		}
+		// Validate SID format (must start with MG and be 34 characters)
+		if len(twilioMessagingServiceSID) != 34 || twilioMessagingServiceSID[:2] != "MG" {
+			return nil, fmt.Errorf("TWILIO_MESSAGING_SERVICE_SID must be a valid Messaging Service SID (starts with MG and is 34 characters), got: %s", twilioMessagingServiceSID)
+		}
+	}
+
 	return &Config{
 		Port:                      port,
 		Environment:               environment,

@@ -39,12 +39,14 @@ interface ChatPaneProps {
   offers?: TrackedOffer[];
   dealers?: Dealer[];
   onInboxMessageAssigned?: () => void;
+  onInboxMessageArchived?: (messageId: string) => void;
+  onThreadArchived?: (threadId: string) => void;
   onNavigateToThread?: (threadId: string) => void;
   onOfferDeleted?: () => void;
   onDealersUpdated?: () => void;
 }
 
-export default function ChatPane({ selectedThreadId, selectedInboxMessage, threads = [], offers = [], dealers = [], onInboxMessageAssigned, onNavigateToThread, onOfferDeleted, onDealersUpdated }: ChatPaneProps) {
+export default function ChatPane({ selectedThreadId, selectedInboxMessage, threads = [], offers = [], dealers = [], onInboxMessageAssigned, onInboxMessageArchived, onThreadArchived, onNavigateToThread, onOfferDeleted, onDealersUpdated }: ChatPaneProps) {
   const { user } = useAuth();
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
@@ -85,8 +87,10 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
       await messageAPI.assignInboxMessageToThread(selectedInboxMessage.id, threadId);
       setShowAssignModal(false);
 
-      // Trigger inbox refresh
-      window.dispatchEvent(new Event('refreshInboxMessages'));
+      // Notify parent to update inbox messages state
+      if (onInboxMessageArchived) {
+        onInboxMessageArchived(selectedInboxMessage.id);
+      }
 
       if (onInboxMessageAssigned) {
         onInboxMessageAssigned();
@@ -109,8 +113,10 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
       // Close dialog
       setShowArchiveDialog(false);
 
-      // Trigger inbox refresh
-      window.dispatchEvent(new Event('refreshInboxMessages'));
+      // Notify parent to update inbox messages state
+      if (onInboxMessageArchived) {
+        onInboxMessageArchived(selectedInboxMessage.id);
+      }
 
       if (onInboxMessageAssigned) {
         onInboxMessageAssigned();
@@ -133,8 +139,10 @@ export default function ChatPane({ selectedThreadId, selectedInboxMessage, threa
       // Close dialog
       setShowArchiveThreadDialog(false);
 
-      // Trigger thread refresh
-      window.dispatchEvent(new Event('refreshThreads'));
+      // Notify parent to update threads state
+      if (onThreadArchived) {
+        onThreadArchived(selectedThreadId);
+      }
     } catch (error) {
       console.error('Failed to archive thread:', error);
       alert('Failed to archive thread');

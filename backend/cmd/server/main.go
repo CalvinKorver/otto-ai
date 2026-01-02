@@ -71,8 +71,21 @@ func main() {
 	emailService := services.NewEmailService(database.DB, cfg.MailgunAPIKey, cfg.MailgunDomain, gmailService)
 
 	// Initialize Twilio service
+	// #region agent log
+	func() {
+		hasAccountSID := cfg.TwilioAccountSID != ""
+		hasAuthToken := cfg.TwilioAuthToken != ""
+		hasMessagingSID := cfg.TwilioMessagingServiceSID != ""
+		log.Printf("Twilio Config - AccountSID: %t, AuthToken: %t, MessagingSID: %t", hasAccountSID, hasAuthToken, hasMessagingSID)
+	}()
+	// #endregion
 	twilioClient := twilio.NewClient(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioMessagingServiceSID)
 	smsService := services.NewSMSService(database.DB, twilioClient)
+	// #region agent log
+	func() {
+		log.Printf("Twilio Client initialized - client: %t, smsService: %t", twilioClient != nil, smsService != nil)
+	}()
+	// #endregion
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService, gmailService)

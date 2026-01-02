@@ -168,10 +168,12 @@ func (s *SMSService) AllocatePhoneNumber(userID uuid.UUID) error {
 	phoneNumber := *availableNumbers[0].PhoneNumber
 	messagingServiceSID := s.twilioClient.GetMessagingServiceSID()
 	
+
 	twilioSID, err := twilio.PurchaseNumber(client, phoneNumber, messagingServiceSID)
 	if err != nil {
 		return fmt.Errorf("failed to purchase number: %w", err)
 	}
+
 	// Update user with phone number and Twilio SID
 	user.PhoneNumber = phoneNumber
 	user.TwilioSID = twilioSID
