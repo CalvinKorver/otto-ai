@@ -13,8 +13,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrash, IconUserPlus } from '@tabler/icons-react';
 import ArchiveConfirmDialog from './ArchiveConfirmDialog';
+import AddToContactsDialog from './AddToContactsDialog';
 import TrackOfferButton from './TrackOfferButton';
 import SendEmailButton from './SendEmailButton';
 import SendSMSButton from './SendSMSButton';
@@ -38,15 +39,18 @@ interface ChatPaneProps {
   offers?: TrackedOffer[];
   dealers?: Dealer[];
   onThreadArchived?: (threadId: string) => void;
+  onThreadUpdated?: (threadId: string, newName: string) => void;
   onNavigateToThread?: (threadId: string) => void;
   onOfferDeleted?: () => void;
   onDealersUpdated?: () => void;
 }
 
-export default function ChatPane({ selectedThreadId, threads = [], offers = [], dealers = [], onThreadArchived, onNavigateToThread, onOfferDeleted, onDealersUpdated }: ChatPaneProps) {
+export default function ChatPane({ selectedThreadId, threads = [], offers = [], dealers = [], onThreadArchived, onThreadUpdated, onNavigateToThread, onOfferDeleted, onDealersUpdated }: ChatPaneProps) {
   const { user } = useAuth();
   const [showArchiveThreadDialog, setShowArchiveThreadDialog] = useState(false);
   const [archivingThread, setArchivingThread] = useState(false);
+  const [showAddToContactsDialog, setShowAddToContactsDialog] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [messageInput, setMessageInput] = useState('');
@@ -103,6 +107,28 @@ export default function ChatPane({ selectedThreadId, threads = [], offers = [], 
       alert('Failed to archive thread');
     } finally {
       setArchivingThread(false);
+    }
+  };
+
+  const handleAddToContacts = async (newName: string) => {
+    if (!selectedThreadId) return;
+
+    setSavingContact(true);
+    try {
+      await threadAPI.update(selectedThreadId, newName);
+
+      // Close dialog
+      setShowAddToContactsDialog(false);
+
+      // Notify parent to update threads list
+      if (onThreadUpdated) {
+        onThreadUpdated(selectedThreadId, newName);
+      }
+    } catch (error) {
+      console.error('Failed to update contact name:', error);
+      alert('Failed to update contact name');
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -314,6 +340,10 @@ export default function ChatPane({ selectedThreadId, threads = [], offers = [], 
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowAddToContactsDialog(true)}>
+                  <IconUserPlus size={16} />
+                  Add to Contacts
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setShowArchiveThreadDialog(true)}>
                   <IconTrash size={16} />
                   Archive Thread
@@ -502,6 +532,15 @@ export default function ChatPane({ selectedThreadId, threads = [], offers = [], 
           </div>
         </div>
       </div>
+
+      {/* Add to Contacts Dialog */}
+      <AddToContactsDialog
+        open={showAddToContactsDialog}
+        onOpenChange={setShowAddToContactsDialog}
+        onConfirm={handleAddToContacts}
+        saving={savingContact}
+        currentName={threads.find(t => t.id === selectedThreadId)?.sellerName || ''}
+      />
 
       {/* Archive Thread Confirmation Dialog */}
       <ArchiveConfirmDialog

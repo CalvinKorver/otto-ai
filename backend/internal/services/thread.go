@@ -167,6 +167,33 @@ func (s *ThreadService) ArchiveThread(threadID, userID uuid.UUID) error {
 	return nil
 }
 
+// UpdateThreadName updates a thread's seller name
+func (s *ThreadService) UpdateThreadName(threadID, userID uuid.UUID, sellerName string) (*models.Thread, error) {
+	// Validate input
+	if sellerName == "" {
+		return nil, errors.New("seller name is required")
+	}
+
+	// Verify thread exists, belongs to user, and is not archived
+	var thread models.Thread
+	if err := s.db.Where("id = ? AND user_id = ? AND deleted_at IS NULL", threadID, userID).First(&thread).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("thread not found")
+		}
+		return nil, fmt.Errorf("failed to find thread: %w", err)
+	}
+
+	// Update seller name
+	thread.SellerName = sellerName
+	thread.UpdatedAt = time.Now()
+
+	if err := s.db.Save(&thread).Error; err != nil {
+		return nil, fmt.Errorf("failed to update thread: %w", err)
+	}
+
+	return &thread, nil
+}
+
 // MarkThreadAsRead marks a thread as read by setting last_read_at to now
 func (s *ThreadService) MarkThreadAsRead(threadID, userID uuid.UUID) error {
 	// Verify the thread exists and belongs to the user

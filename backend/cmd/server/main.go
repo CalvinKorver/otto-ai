@@ -185,7 +185,7 @@ func main() {
 			r.Get("/", threadHandler.GetThreads)
 			r.Post("/", threadHandler.CreateThread)
 			r.Get("/{id}", threadHandler.GetThread)
-			r.Put("/{id}/read", threadHandler.MarkThreadAsRead)
+			r.Put("/{id}", threadHandler.UpdateThread)
 			r.Delete("/{id}", threadHandler.ArchiveThread)
 
 			// Message routes nested under threads

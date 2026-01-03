@@ -163,14 +163,27 @@ function DashboardContent() {
   const handleThreadArchived = (threadId: string) => {
     // Immediately remove the archived thread from the threads list
     setThreads(prev => prev.filter(thread => thread.id !== threadId));
-    
+
     // Clear selection if this was the selected thread
     if (selectedThreadId === threadId) {
       setSelectedThreadId(null);
     }
-    
+
     // Refresh dashboard to ensure consistency with server
     loadDashboard();
+  };
+
+  const handleThreadUpdated = (threadId: string, newName: string) => {
+    // Update the thread in the threads list
+    setThreads(prev => prev.map(thread =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            sellerName: newName,
+            displayName: newName === thread.phone || newName === '' ? thread.phone : newName
+          }
+        : thread
+    ));
   };
 
   const handleThreadCreated = (newThread: Thread) => {
@@ -258,6 +271,7 @@ function DashboardContent() {
               offers={offers}
               dealers={dealers}
               onThreadArchived={handleThreadArchived}
+              onThreadUpdated={handleThreadUpdated}
               onNavigateToThread={handleNavigateToThread}
               onOfferDeleted={loadDashboard}
               onDealersUpdated={loadDashboard}

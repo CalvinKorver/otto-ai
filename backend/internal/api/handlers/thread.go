@@ -28,6 +28,12 @@ type CreateThreadRequest struct {
 	SellerType string `json:"sellerType"`
 }
 
+// UpdateThreadRequest represents the request to update a thread
+type UpdateThreadRequest struct {
+	SellerName *string `json:"sellerName,omitempty"`
+	MarkAsRead *bool   `json:"markAsRead,omitempty"`
+}
+
 // ThreadResponse represents a thread in API responses
 type ThreadResponse struct {
 	ID                string  `json:"id"`
@@ -235,6 +241,118 @@ func (h *ThreadHandler) ArchiveThread(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "thread archived successfully"})
+}
+
+// UpdateThread updates a thread's seller name and/or marks it as read
+func (h *ThreadHandler) UpdateThread(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
+	if !ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	threadIDStr := chi.URLParam(r, "id")
+	threadID, err := uuid.Parse(threadIDStr)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid thread ID"})
+		return
+	}
+
+	var req UpdateThreadRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid request body"})
+		return
+	}
+
+	// Validate that at least one field is being updated
+	if req.SellerName == nil && req.MarkAsRead == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "at least one field must be provided"})
+		return
+	}
+
+	// Handle marking thread as read
+	if req.MarkAsRead != nil && *req.MarkAsRead {
+		if err := h.threadService.MarkThreadAsRead(threadID, userID); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			if err.Error() == "thread not found" {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
+		}
+	}
+
+	var thread *models.Thread
+
+	// Handle updating seller name
+	if req.SellerName != nil {
+		// Validate seller name
+		if *req.SellerName == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "seller name cannot be empty"})
+			return
+		}
+
+		thread, err = h.threadService.UpdateThreadName(threadID, userID, *req.SellerName)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			if err.Error() == "thread not found" {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
+		}
+	} else {
+		// If only marking as read, fetch the thread to return
+		thread, err = h.threadService.GetThreadByID(threadID, userID)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			if err.Error() == "thread not found" {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
+		}
+	}
+
+	// Calculate display name
+	displayName := thread.SellerName
+	if thread.SellerName == thread.Phone || thread.SellerName == "" {
+		displayName = thread.Phone
+	}
+
+	resp := ThreadResponse{
+		ID:          thread.ID.String(),
+		SellerName:  thread.SellerName,
+		SellerType:  string(thread.SellerType),
+		Phone:       thread.Phone,
+		CreatedAt:   thread.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		DisplayName: displayName,
+	}
+
+	if thread.LastMessageAt != nil {
+		lastMsg := thread.LastMessageAt.Format("2006-01-02T15:04:05Z")
+		resp.LastMessageAt = &lastMsg
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // MarkThreadAsRead marks a thread as read

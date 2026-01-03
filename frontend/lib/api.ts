@@ -208,12 +208,17 @@ export const threadAPI = {
     return response.data;
   },
 
+  update: async (threadId: string, sellerName: string): Promise<Thread> => {
+    const response = await api.put<Thread>(`/threads/${threadId}`, { sellerName });
+    return response.data;
+  },
+
   archive: async (threadId: string): Promise<void> => {
     await api.delete(`/threads/${threadId}`);
   },
 
   markAsRead: async (threadId: string): Promise<void> => {
-    await api.put(`/threads/${threadId}/read`);
+    await api.put(`/threads/${threadId}`, { markAsRead: true });
   },
 };
 
